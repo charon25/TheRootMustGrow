@@ -41,6 +41,7 @@ class Game:
 
         # Roots
         self.root_ghost: RootGhost = RootGhost()
+        self.roots: list[Root] = list()
 
         self.has_ended = False
 
@@ -50,37 +51,49 @@ class Game:
 
 
     def mousedown_game(self, data: dict[str, int]):
-        pyg.time.set_timer(pyg.event.Event(pyg.USEREVENT, {'name': 'drag_timer'}), 55, loops=0)
-        self.is_clicking = True
-        self.drag_start_y = data['pos'][1]
+        if data['button'] == co.LEFT_CLICK:
+            pyg.time.set_timer(pyg.event.Event(pyg.USEREVENT, {'name': 'drag_timer'}), 55, loops=0)
+            self.is_clicking = True
+            self.drag_start_y = data['pos'][1]
+        elif data['button'] == co.RIGHT_CLICK:
+            self.root_ghost.disable()
 
     def mouseup_game(self, data: dict[str, int]):
+        if data['button'] != co.LEFT_CLICK:
+            return
+
         self.is_clicking = False
         self.is_dragging = False
 
+        # TODO : check si on commencer la racine ici
+        x = (0.5 + data['pos'][0] // co.TILE) * co.TILE
+        y = (0.5 + data['pos'][1] // co.TILE) * co.TILE
         if not self.root_ghost.enabled:
-            x = (0.5 + data['pos'][0] // co.TILE) * co.TILE
-            y = (0.5 + data['pos'][1] // co.TILE) * co.TILE
-            self.root_ghost.enable(x, y)
+            self.root_ghost.enable(x, y + self.current_height)
         else:
-            pass
+            # TODO : check si on peut finir la racine ici
+            self.root_ghost.update_texture(x, y + self.current_height)
+            self.roots.append(Root(self.root_ghost.x, self.root_ghost.y, self.root_ghost.texture))
+            self.root_ghost.disable()
 
-    def mousemove_game(self, data: dict[str, int]):
-        if self.is_dragging:
-            self.current_height -= data['rel'][1]
-            if self.current_height < 0:
-                self.current_height = 0
-            elif self.current_height + co.HEIGHT > self.max_visible_tiles * co.TILE:
-                self.current_height = self.max_visible_tiles * co.TILE - co.HEIGHT
-        else:
-            self.root_ghost.update_texture(*data['pos'])
-
-    def mousewheel_game(self, data: dict[str, int]):
-        self.current_height -= data['y'] * co.TILE
+    def scroll_screen(self, quantity: int):
+        self.current_height -= quantity
         if self.current_height < 0:
             self.current_height = 0
         elif self.current_height + co.HEIGHT > self.max_visible_tiles * co.TILE:
             self.current_height = self.max_visible_tiles * co.TILE - co.HEIGHT
+
+        x, y = pyg.mouse.get_pos()
+        self.root_ghost.update_texture(x, y + self.current_height)
+
+    def mousemove_game(self, data: dict[str, int]):
+        if self.is_dragging:
+            self.scroll_screen(data['rel'][1])
+        else:
+            self.root_ghost.update_texture(data['pos'][0], data['pos'][1] + self.current_height)
+
+    def mousewheel_game(self, data: dict[str, int]):
+        self.scroll_screen(data['y'] * co.TILE)
 
     def generate_missing(self):
         max_y = self.current_height // co.TILE + co.TILES_Y
@@ -99,10 +112,15 @@ class Game:
             for x, tile in enumerate(row):
                 game_surface.blit(tile.get_texture(), (x * co.TILE, y * co.TILE))
 
+        # Roots
+        for root in self.roots:
+            if root.is_visible(self.current_height):
+                game_surface.blit(root.texture, (root.x, root.y - self.current_height))
 
         # RootGhost
         if self.root_ghost.texture_ready:
-            game_surface.blit(self.root_ghost.texture, (self.root_ghost.x, self.root_ghost.y))
+            game_surface.blit(self.root_ghost.texture, (self.root_ghost.x, self.root_ghost.y - self.current_height))
+
 
         self.screen.blit(game_surface, next(self.offset))
 

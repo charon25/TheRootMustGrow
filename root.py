@@ -8,7 +8,23 @@ import textures as tx
 
 
 class Root:
-    pass
+    def __init__(self, x: int, y: int, texture: Surface) -> None:
+        self.x: int = x
+        self.y: int = y
+        self.texture: Surface = texture
+        self.texture_height = self.texture.get_height()
+        self.width: int = 1
+
+    def _update_texture(self):
+        pass
+
+    def increase_width(self):
+        self.width += 1
+        self._update_texture()
+
+    def is_visible(self, current_height: int):
+        return current_height + co.HEIGHT >= self.y + self.texture_height - current_height >= 0
+
 
 class RootGhost:
     def __init__(self) -> None:
@@ -38,7 +54,8 @@ class RootGhost:
         angle = -atan2(mouse_y - self.start_y, mouse_x - self.start_x) # radians
 
         self.texture = Surface((distance, height), flags=pyg.SRCALPHA)
-        self.texture.blit(tx.BASE_ROOT, pyg.Rect(0, 0, distance, height))
+        pyg.draw.polygon(self.texture, (255, 255, 255, 255), ((0, 0), (distance, height / 2 - 1), (distance, height / 2 + 1), (0, height)))
+        self.texture.blit(tx.BASE_ROOT, pyg.Rect(0, 0, distance, height), special_flags=pyg.BLEND_RGBA_MIN)
         self.texture = pyg.transform.rotate(self.texture, angle * 180 / pi)
 
         width, height = self.texture.get_width(), self.texture.get_height()
