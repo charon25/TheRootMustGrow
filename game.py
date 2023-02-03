@@ -36,11 +36,13 @@ class Game:
         self.is_clicking: bool = False
         self.is_dragging: bool = False
         self.drag_start_y: int = 0
+        self.max_height: int = 0
 
         self.has_ended = False
 
     def start(self) -> None:
         self.terrain = self.terrain_generator.starting_terrain()
+        self.max_visible_tiles = co.TILES_Y + 4
 
 
     def mousedown_game(self, data: dict[str, int]):
@@ -57,11 +59,15 @@ class Game:
             self.current_height -= data['rel'][1]
             if self.current_height < 0:
                 self.current_height = 0
+            elif self.current_height + co.HEIGHT > self.max_visible_tiles * co.TILE:
+                self.current_height = self.max_visible_tiles * co.TILE - co.HEIGHT
 
     def mousewheel_game(self, data: dict[str, int]):
         self.current_height -= data['y'] * co.TILE
         if self.current_height < 0:
             self.current_height = 0
+        elif self.current_height + co.HEIGHT > self.max_visible_tiles * co.TILE:
+            self.current_height = self.max_visible_tiles * co.TILE - co.HEIGHT
 
     def generate_missing(self):
         max_y = self.current_height // co.TILE + co.TILES_Y
@@ -74,12 +80,11 @@ class Game:
         game_surface.blit(tx.BACKGROUND, (0, 0))
 
         start_y = self.current_height // co.TILE
-        end_y = start_y + co.TILES_Y
 
-        for y in range(start_y, end_y):
-            row = self.terrain[y]
+        for y in range(co.TILES_Y):
+            row = self.terrain[y + start_y]
             for x, tile in enumerate(row):
-                game_surface.blit(tile.get_texture(), (x * co.TILE, (y - start_y) * co.TILE))
+                game_surface.blit(tile.get_texture(), (x * co.TILE, y * co.TILE))
 
         self.screen.blit(game_surface, next(self.offset))
 
