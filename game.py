@@ -4,6 +4,7 @@ import pyghelper
 
 import constants as co
 from generator import TerrainGenerator
+from root import RootGhost, Root
 from tile import Tile, TileType
 import textures as tx
 
@@ -38,11 +39,14 @@ class Game:
         self.drag_start_y: int = 0
         self.max_height: int = 0
 
+        # Roots
+        self.root_ghost: RootGhost = RootGhost()
+
         self.has_ended = False
 
     def start(self) -> None:
         self.terrain = self.terrain_generator.starting_terrain()
-        self.max_visible_tiles = co.TILES_Y + 4
+        self.max_visible_tiles = co.TILES_Y + 500
 
 
     def mousedown_game(self, data: dict[str, int]):
@@ -54,6 +58,13 @@ class Game:
         self.is_clicking = False
         self.is_dragging = False
 
+        if not self.root_ghost.enabled:
+            x = (0.5 + data['pos'][0] // co.TILE) * co.TILE
+            y = (0.5 + data['pos'][1] // co.TILE) * co.TILE
+            self.root_ghost.enable(x, y)
+        else:
+            pass
+
     def mousemove_game(self, data: dict[str, int]):
         if self.is_dragging:
             self.current_height -= data['rel'][1]
@@ -61,6 +72,8 @@ class Game:
                 self.current_height = 0
             elif self.current_height + co.HEIGHT > self.max_visible_tiles * co.TILE:
                 self.current_height = self.max_visible_tiles * co.TILE - co.HEIGHT
+        else:
+            self.root_ghost.update_texture(*data['pos'])
 
     def mousewheel_game(self, data: dict[str, int]):
         self.current_height -= data['y'] * co.TILE
@@ -79,12 +92,17 @@ class Game:
         game_surface = pyg.Surface((co.WIDTH, co.HEIGHT), pyg.SRCALPHA)
         game_surface.blit(tx.BACKGROUND, (0, 0))
 
+        # Terrain
         start_y = self.current_height // co.TILE
-
         for y in range(co.TILES_Y):
             row = self.terrain[y + start_y]
             for x, tile in enumerate(row):
                 game_surface.blit(tile.get_texture(), (x * co.TILE, y * co.TILE))
+
+
+        # RootGhost
+        if self.root_ghost.texture_ready:
+            game_surface.blit(self.root_ghost.texture, (self.root_ghost.x, self.root_ghost.y))
 
         self.screen.blit(game_surface, next(self.offset))
 
