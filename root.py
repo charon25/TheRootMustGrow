@@ -1,5 +1,6 @@
 from math import atan2, cos, dist, pi, sin
 
+from bresenham import bresenham
 import pygame as pyg
 from pygame import Surface
 
@@ -7,13 +8,19 @@ import constants as co
 import textures as tx
 
 
+def compute_crossing_tiles(start_tile_x: int, start_tile_y: int, end_tile_x: int, end_tile_y: int):
+        return list(bresenham(start_tile_x, start_tile_y, end_tile_x, end_tile_y))
+
 class Root:
-    def __init__(self, x: int, y: int, texture: Surface) -> None:
+    def __init__(self, x: int, y: int, texture: Surface, crossing_tiles: list[tuple[int, int]]) -> None:
         self.x: int = x
         self.y: int = y
         self.texture: Surface = texture
         self.texture_height = self.texture.get_height()
         self.width: int = 1
+        self.crossing_tiles: list[tuple[int, int]] = list()
+
+    
 
     def _update_texture(self):
         pass

@@ -4,7 +4,7 @@ import pyghelper
 
 import constants as co
 from generator import TerrainGenerator
-from root import RootGhost, Root
+from root import compute_crossing_tiles, RootGhost, Root
 from tile import Tile, TileType
 import textures as tx
 
@@ -58,6 +58,25 @@ class Game:
         elif data['button'] == co.RIGHT_CLICK:
             self.root_ghost.disable()
 
+    def create_root_from_ghost(self, mouse_x: int, mouse_y: int) -> bool:
+        crossing_tiles = compute_crossing_tiles(
+            int(self.root_ghost.start_x // co.TILE),
+            int(self.root_ghost.start_y // co.TILE),
+            mouse_x // co.TILE,
+            mouse_y // co.TILE
+        )
+        for x_cross, y_cross in crossing_tiles:
+            if self.terrain[y_cross][x_cross].has_root:
+                return False
+
+        for x_cross, y_cross in crossing_tiles:
+            self.terrain[y_cross][x_cross].type = TileType.ROOT # TODO temporary line
+            self.terrain[y_cross][x_cross].has_root = True
+
+        new_root = Root(self.root_ghost.x, self.root_ghost.y, self.root_ghost.texture, crossing_tiles)
+        self.roots.append(new_root)
+        return True
+
     def mouseup_game(self, data: dict[str, int]):
         if data['button'] != co.LEFT_CLICK:
             return
@@ -69,12 +88,14 @@ class Game:
         x = (0.5 + data['pos'][0] // co.TILE) * co.TILE
         y = (0.5 + data['pos'][1] // co.TILE) * co.TILE
         if not self.root_ghost.enabled:
-            self.root_ghost.enable(x, y + self.current_height)
+            tile_x, tile_y = data['pos'][0] // co.TILE, (data['pos'][1] + self.current_height) // co.TILE
+            if not self.terrain[tile_y][tile_x].has_root:
+                self.root_ghost.enable(x, y + self.current_height)
         else:
             # TODO : check si on peut finir la racine ici
             self.root_ghost.update_texture(x, y + self.current_height)
-            self.roots.append(Root(self.root_ghost.x, self.root_ghost.y, self.root_ghost.texture))
-            self.root_ghost.disable()
+            if self.create_root_from_ghost(data['pos'][0], data['pos'][1] + self.current_height):
+                self.root_ghost.disable()
 
     def scroll_screen(self, quantity: int):
         self.current_height -= quantity
