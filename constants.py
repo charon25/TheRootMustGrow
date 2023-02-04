@@ -32,8 +32,8 @@ STARTING_ABSORPTION_RATE: dict[ResourceType, float] = {
     ResourceType.PHOSPORUS: 0.2
 }
 STARTING_CONSUMPTION_RATE: dict[ResourceType, float] = {
-    ResourceType.WATER: 0.01,
-    ResourceType.NITROGEN: 0.0001,
-    ResourceType.PHOSPORUS: 0.0001
+    ResourceType.WATER: 0,#.001,
+    ResourceType.NITROGEN: 0,#.0001,
+    ResourceType.PHOSPORUS: 0#,.0001
 }
 

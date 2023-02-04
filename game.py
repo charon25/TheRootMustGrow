@@ -61,6 +61,7 @@ class Game:
         self.root_ghost: RootGhost = RootGhost()
         self.roots: list[Root] = list()
         self.decay_cooldown = -1
+        self.root_id = 0
 
         self.create_initial_roots()
 
@@ -90,7 +91,8 @@ class Game:
 
     def create_root_from_ghost(self, root_ghost: RootGhost, mouse_x: int, mouse_y: int, auto: bool = False) -> bool:
         crossing_tiles = self.get_crossing_tile_root_ghost(root_ghost, mouse_x, mouse_y)
-        new_root = Root(root_ghost, crossing_tiles)
+        new_root = Root(self.root_id, root_ghost, crossing_tiles, not_cuttable=auto)
+        self.root_id += 1
 
         for x_cross, y_cross in crossing_tiles:
             self.terrain[y_cross][x_cross].has_root = True
@@ -100,6 +102,7 @@ class Game:
             mouse_tile_x, mouse_tile_y = mouse_x // co.TILE, mouse_y // co.TILE
             if self.terrain[mouse_tile_y][mouse_tile_x].is_resource_tile():
                 self.resources_tiles.append(self.terrain[mouse_tile_y][mouse_tile_x])
+                new_root.resource_tile = self.terrain[mouse_tile_y][mouse_tile_x]
 
         self.roots.append(new_root)
         return True
@@ -107,33 +110,65 @@ class Game:
     def create_root_ghost(self, mouse_x: int, mouse_y: int):
         tile_x, tile_y = mouse_x // co.TILE, (mouse_y + self.current_height_floored) // co.TILE
 
-        if not self.terrain[tile_y][tile_x].has_root:
+        tile = self.terrain[tile_y][tile_x]
+
+        if not tile.has_root:
             return
 
-        if not self.terrain[tile_y][tile_x].root.contains_point(mouse_x, mouse_y + self.current_height):
+        if not tile.root.contains_point(mouse_x, mouse_y + self.current_height):
             return
 
         x = co.TILE / 2 + floor_n(mouse_x, co.TILE)
         y = co.TILE / 2 + floor_n(mouse_y, co.TILE)
-        self.root_ghost.enable(x, y + self.current_height_floored, self.terrain[tile_y][tile_x].root)
+        self.root_ghost.enable(x, y + self.current_height_floored, tile.root)
 
     def mouseup_game(self, data: dict[str, int]):
-        if data['button'] != co.LEFT_CLICK:
-            return
+        if data['button'] == co.LEFT_CLICK:
+            self.is_clicking = False
 
-        self.is_clicking = False
+            if not self.root_ghost.enabled:
+                self.create_root_ghost(*data['pos'])
+            else:
+                if not self.is_dragging and self.root_ghost.correct:
+                    x = co.TILE / 2 + floor_n(data['pos'][0], co.TILE)
+                    y = co.TILE / 2 + floor_n(data['pos'][1], co.TILE)
+                    self.root_ghost.set_endpoint(x, y + self.current_height_floored)
+                    self.create_root_from_ghost(self.root_ghost, data['pos'][0], data['pos'][1] + self.current_height_floored)
+                    self.root_ghost.disable()
 
-        if not self.root_ghost.enabled:
-            self.create_root_ghost(*data['pos'])
-        else:
-            if not self.is_dragging and self.root_ghost.correct:
-                x = co.TILE / 2 + floor_n(data['pos'][0], co.TILE)
-                y = co.TILE / 2 + floor_n(data['pos'][1], co.TILE)
-                self.root_ghost.set_endpoint(x, y + self.current_height_floored)
-                self.create_root_from_ghost(self.root_ghost, data['pos'][0], data['pos'][1] + self.current_height_floored)
-                self.root_ghost.disable()
+            self.is_dragging = False
+        elif data['button'] == co.RIGHT_CLICK and not self.root_ghost.enabled:
+            mouse_x, mouse_y = data['pos']
+            tile_x, tile_y = mouse_x // co.TILE, (mouse_y + self.current_height_floored) // co.TILE
 
-        self.is_dragging = False
+            if not self.terrain[tile_y][tile_x].has_root:
+                return
+
+            if not self.terrain[tile_y][tile_x].root.contains_point(mouse_x, mouse_y + self.current_height):
+                return
+
+            cut_root = self.terrain[tile_y][tile_x].root
+            if cut_root.not_cuttable or cut_root.parent is None:
+                return
+
+            if any(root.is_child(cut_root) for root in self.roots if root is not cut_root):
+                return
+
+            for x_cross, y_cross in cut_root.crossing_tiles:
+                if not (x_cross, y_cross) in cut_root.parent.crossing_tiles:
+                    self.terrain[y_cross][x_cross].has_root = False
+                    self.terrain[y_cross][x_cross].root = None
+                else:
+                    self.terrain[y_cross][x_cross].root = cut_root.parent
+
+            if cut_root.resource_tile is not None:
+                # try:
+                    self.resources_tiles.remove(cut_root.resource_tile)
+                # except ValueError:
+                #     pass
+
+            self.roots.remove(cut_root)
+
 
     def scroll_screen(self, quantity: int):
         self.current_height -= quantity
@@ -147,6 +182,22 @@ class Game:
         x, y = pyg.mouse.get_pos()
         self.root_ghost.set_endpoint(x, y + self.current_height)
 
+    def is_root_ghost_correct(self, mouse_x: int, mouse_y: int):
+        if mouse_y // co.TILE <= self.root_ghost.start_y // co.TILE:
+            return False
+
+        tile_x, tile_y = mouse_x // co.TILE, mouse_y // co.TILE
+        tile = self.terrain[tile_y][tile_x]
+
+        if tile.has_root and tile.root.contains_point(mouse_x, mouse_y):
+            return False
+
+        for tile_x, tile_y in self.get_crossing_tile_root_ghost(self.root_ghost, mouse_x, mouse_y):
+            if tile.has_root and not self.root_ghost.starting_root.is_child(tile.root):
+                return False
+        
+        return True
+
     def mousemove_game(self, data: dict[str, int]):
         if self.is_dragging:
             self.scroll_screen(data['rel'][1])
@@ -155,15 +206,8 @@ class Game:
             length = self.root_ghost.get_length(mouse_x, mouse_y)
             if length < co.MAX_ROOT_LENGTH:
                 self.root_ghost.set_endpoint(mouse_x, mouse_y)
-                self.root_ghost.correct = True
+                self.root_ghost.correct = self.is_root_ghost_correct(mouse_x, mouse_y)
 
-                for tile_x, tile_y in self.get_crossing_tile_root_ghost(self.root_ghost, mouse_x, mouse_y):
-                    if self.terrain[tile_y][tile_x].has_root and not self.root_ghost.starting_root.is_child(self.terrain[tile_y][tile_x].root):
-                        self.root_ghost.correct = False
-                        break
-
-                if mouse_y // co.TILE <= self.root_ghost.start_y // co.TILE:
-                    self.root_ghost.correct = False
             else:
                 angle = -atan2(mouse_y - self.root_ghost.start_y, mouse_x - self.root_ghost.start_x)
                 end_x = int(self.root_ghost.start_x + cos(angle) * co.MAX_ROOT_LENGTH)
@@ -186,10 +230,6 @@ class Game:
 
         # Terrain
         start_y = self.current_height // co.TILE
-        # range_len = co.TILES_Y + 1
-        # if start_y > 0:
-        #     start_y -= 1
-        #     range_len += 1
 
         for y in range(co.TILES_Y):
             row = self.terrain[y + start_y]
@@ -218,9 +258,8 @@ class Game:
                 else:
                     self.resources[resource] += tile.resources
                     tile.resources = 0
-            
-            if tile.resources <= 0:
-                tile.type = TileType.BASE
+                    tile.type = TileType.BASE
+                    tile.root.resource_tile = None
 
         total_roots = sum(root.length for root in self.roots)
         for resource in co.ResourceType:

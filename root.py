@@ -21,7 +21,8 @@ def compute_crossing_tiles(start_tile_x: int, start_tile_y: int, end_tile_x: int
 
 
 class Root:
-    def __init__(self, root_ghost: 'RootGhost', crossing_tiles: list[tuple[int, int]]) -> None:
+    def __init__(self, id: int, root_ghost: 'RootGhost', crossing_tiles: list[tuple[int, int]], not_cuttable: bool = False) -> None:
+        self.id: int = id
         self.x: int = root_ghost.x
         self.y: int = root_ghost.y
         self.start_x: int = root_ghost.start_x
@@ -31,10 +32,15 @@ class Root:
         self.texture: Surface = root_ghost.texture
         self.texture_height = self.texture.get_height()
         self.width: int = 1
-        self.crossing_tiles: list[tuple[int, int]] = list()
+        self.crossing_tiles: list[tuple[int, int]] = crossing_tiles
         self.parent: 'Root' = root_ghost.starting_root
         self.length = root_ghost.get_length(self.end_x, self.end_y)
         self.is_dead = False
+        self.not_cuttable = not_cuttable
+        self.resource_tile = None
+
+    def __repr__(self) -> str:
+        return f'root {self.id}'
 
     def in_boundary(self, x: int, y:int) -> bool:
         sx, ex = min(self.start_x, self.end_x), max(self.start_x, self.end_x)
@@ -42,16 +48,12 @@ class Root:
         start_x, end_x = floor_n(sx, co.TILE), floor_n(ex, co.TILE) + co.TILE
         start_y, end_y = floor_n(self.start_y, co.TILE), floor_n(self.end_y, co.TILE) + co.TILE
 
-        print(start_x, x, end_x)
-        print(start_y, y, end_y)
-
         if not (start_x <= x <= end_x) or not (start_y <= y <= end_y):
             return False
         return True
 
     def contains_point(self, x: int, y: int) -> bool:
         if not self.in_boundary(x, y):
-            print('no boundary')
             return False
 
         start_x, start_y = (0.5 + self.start_x // co.TILE) * co.TILE, (0.5 + self.start_y // co.TILE) * co.TILE
