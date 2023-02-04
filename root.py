@@ -19,6 +19,28 @@ def compute_crossing_tiles(start_tile_x: int, start_tile_y: int, end_tile_x: int
     points.update(bresenham(start_tile_x, start_tile_y + 1, end_tile_x, end_tile_y + 1))
     return list(points)
 
+def exact_crossing_tiles(start_x: int, start_y: int, end_x: int, end_y: int) -> list[tuple[int, int]]:
+    start_x, start_y = (0.5 + start_x // co.TILE) * co.TILE, (0.5 + start_y // co.TILE) * co.TILE
+    end_x, end_y = (0.5 + end_x // co.TILE) * co.TILE, (0.5 + end_y // co.TILE) * co.TILE
+
+    delta_x, delta_y = end_x - start_x, end_y - start_y
+    distance = ((end_x - start_x) ** 2 + (end_y - start_y) ** 2) ** 0.5
+    if distance <= 1e-7:
+        return [(int(start_x // co.TILE), int(start_y // co.TILE))]
+
+    dx, dy = delta_x / distance, delta_y / distance
+    x, y = start_x, start_y
+    total_dy = 0
+    
+    points = set()
+    while abs(total_dy) < abs(delta_y):
+        total_dy += dy
+        x += dx
+        y += dy
+        points.add((int(x // co.TILE), int(y // co.TILE)))
+
+    return list(points)
+
 
 def update_texture(start_x: int, start_y: int, end_x: int, end_y: int, correct: bool, width: int) -> tuple[Surface, float, float]:
     height = co.ROOT_HEIGHTS[width]

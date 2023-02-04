@@ -3,6 +3,8 @@ import pyghelper
 
 import constants as co
 
+import random
+random.seed(42)
 
 pygame.init()
 pygame.display.init()

@@ -11,12 +11,17 @@ import textures as tx
 class TileType(Enum):
     BASE = 0
 
+    ROCK = 5
+
     WATER = co.ResourceType.WATER.value
     NITROGEN = co.ResourceType.NITROGEN.value
     PHOSPHORUS = co.ResourceType.PHOSPHORUS.value
 
 
 def get_random_texture(tile_type: TileType) -> Surface:
+    if tile_type == TileType.ROCK:
+        return choice(tx.ROCK_TILES)
+
     if tile_type == TileType.WATER:
         return choice(tx.WATER_TILES)
 

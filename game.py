@@ -7,7 +7,7 @@ import pyghelper
 import constants as co
 from generator import TerrainGenerator
 from particle import Particle
-from root import compute_crossing_tiles, RootGhost, Root
+from root import compute_crossing_tiles, exact_crossing_tiles, RootGhost, Root
 from tile import Tile, TileType
 import textures as tx
 import utils
@@ -90,11 +90,25 @@ class Game:
             self.root_ghost.disable()
 
     def get_crossing_tile_root_ghost(self, root_ghost: RootGhost, mouse_x: int, mouse_y: int) -> list[tuple[int, int]]:
+        return exact_crossing_tiles(
+            root_ghost.start_x,
+            root_ghost.start_y,
+            mouse_x,
+            mouse_y
+        )
         return compute_crossing_tiles(
             int(root_ghost.start_x // co.TILE),
             int(root_ghost.start_y // co.TILE),
             mouse_x // co.TILE,
             mouse_y // co.TILE
+        )
+
+    def get_exact_crossing_tile_root_ghost(self, root_ghost: RootGhost, mouse_x: int, mouse_y: int) -> list[tuple[int, int]]:
+        return exact_crossing_tiles(
+            root_ghost.start_x,
+            root_ghost.start_y,
+            mouse_x,
+            mouse_y
         )
 
     def create_root_from_ghost(self, root_ghost: RootGhost, mouse_x: int, mouse_y: int, auto: bool = False) -> bool:
@@ -226,7 +240,15 @@ class Game:
             return False
 
         for tile_x, tile_y in self.get_crossing_tile_root_ghost(self.root_ghost, mouse_x, mouse_y):
+            tile = self.terrain[tile_y][tile_x]
             if tile.has_root and not self.root_ghost.starting_root.is_child(tile.root):
+                return False
+        # print('===')
+        # print(self.terrain[6][5])
+        for tile_x, tile_y in self.get_exact_crossing_tile_root_ghost(self.root_ghost, mouse_x, mouse_y):
+            tile = self.terrain[tile_y][tile_x]
+            # print(tile_x, tile_y, tile.type)
+            if tile.type == TileType.ROCK:
                 return False
 
         return True
@@ -278,8 +300,9 @@ class Game:
             row = self.terrain[y + start_y]
             for x, tile in enumerate(row):
                 game_surface.blit(tile.texture, (x * co.TILE, y * co.TILE))
-                if tile.is_resource_tile() and tile.resource > 0:
-                    resource_tiles.append(tile)
+                if tile.type != TileType.BASE:
+                    if (tile.is_resource_tile() and tile.resource > 0):
+                        resource_tiles.append(tile)
                     game_surface.blit(tile.resource_textures, (x * co.TILE, y * co.TILE))
 
         # Roots
@@ -351,7 +374,6 @@ class Game:
             if self.decay_cooldown < 0:
                 smallest_resource = min(quantity for _, quantity in self.resources.items())
                 self.decay_cooldown = utils.clamped_lerp(smallest_resource, co.MIN_DECAY_COOLDOWN_RESOURCE, 0, co.MIN_DECAY_COOLDOWN, co.STARTING_DECAY_COOLDOWN)
-                print(self.decay_cooldown)
 
         self.resources_tiles = [tile for tile in self.resources_tiles if tile.resource > 0]
 
