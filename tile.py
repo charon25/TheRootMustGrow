@@ -1,6 +1,7 @@
 from enum import Enum
 
 from pygame import Surface
+from root import Root
 
 import constants as co
 import textures as tx
@@ -16,6 +17,7 @@ class Tile:
     def __init__(self, type: TileType) -> None:
         self.type = type
         self.has_root = False
+        self.root: Root = None
 
     def get_texture(self) -> Surface:
         if self.type == TileType.BASE:
