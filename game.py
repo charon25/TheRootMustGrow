@@ -1,4 +1,4 @@
-from math import atan2, cos, dist, sin
+from math import atan2, ceil, cos, dist, sin
 import pygame as pyg
 from pygame import Surface
 import pyghelper
@@ -8,7 +8,7 @@ from generator import TerrainGenerator
 from root import compute_crossing_tiles, RootGhost, Root
 from tile import Tile, TileType
 import textures as tx
-from utils import floor_n
+from utils import floor_n, get_font
 
 
 
@@ -49,7 +49,7 @@ class Game:
         self.is_dragging: bool = False
         self.drag_start_y: int = 0
         self.max_height: int = 0
-        self.max_visible_tiles = co.TILES_Y + 500
+        self.max_visible_tiles = co.TILES_Y + co.STARTING_SCROLL_OFFSET
 
         # Ressources
         self.resources: dict[co.ResourceType, int] = {resource: 100 for resource in list(co.ResourceType)} # TODO bonnes valeurs
@@ -103,6 +103,9 @@ class Game:
             if self.terrain[mouse_tile_y][mouse_tile_x].is_resource_tile():
                 self.resources_tiles.append(self.terrain[mouse_tile_y][mouse_tile_x])
                 new_root.resource_tile = self.terrain[mouse_tile_y][mouse_tile_x]
+
+            if mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET > self.max_visible_tiles:
+                self.max_visible_tiles = mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET
 
         self.roots.append(new_root)
         return True
@@ -163,7 +166,7 @@ class Game:
 
             if cut_root.resource_tile is not None:
                 # try:
-                    self.resources_tiles.remove(cut_root.resource_tile)
+                self.resources_tiles.remove(cut_root.resource_tile)
                 # except ValueError:
                 #     pass
 
@@ -231,15 +234,27 @@ class Game:
         # Terrain
         start_y = self.current_height // co.TILE
 
+        resource_tiles: list[Tile] = []
+
         for y in range(co.TILES_Y):
             row = self.terrain[y + start_y]
             for x, tile in enumerate(row):
+                if tile.is_resource_tile():
+                    resource_tiles.append(tile)
                 game_surface.blit(tile.get_texture(), (x * co.TILE, y * co.TILE))
 
         # Roots
         for root in self.roots:
             if root.is_visible(self.current_height_floored):
                 game_surface.blit(root.texture, (root.x, root.y - self.current_height_floored))
+
+        # Resources
+        font = get_font(15)
+        for tile in resource_tiles:
+            quantity_text_surface = font.render(str(ceil(tile.resource)), False, co.RESOURCE_FONT_COLOR[tile.get_resource_type()])
+            y = tile.y * co.TILE + co.TILE / 2 - quantity_text_surface.get_height() / 2
+            x = tile.x * co.TILE + co.TILE / 2 - quantity_text_surface.get_width() / 2
+            game_surface.blit(quantity_text_surface, (x, y - self.current_height_floored))
 
         # RootGhost
         if self.root_ghost.texture_ready:
@@ -250,14 +265,14 @@ class Game:
 
     def update_resources(self):
         for tile in self.resources_tiles:
-            if tile.resources >= 0:
+            if tile.resource >= 0:
                 resource = co.ResourceType(tile.type.value)
-                if tile.resources > self.absorption_rate[resource]:
-                    tile.resources -= self.absorption_rate[resource]
+                if tile.resource > self.absorption_rate[resource]:
+                    tile.resource -= self.absorption_rate[resource]
                     self.resources[resource] += self.absorption_rate[resource]
                 else:
-                    self.resources[resource] += tile.resources
-                    tile.resources = 0
+                    self.resources[resource] += tile.resource
+                    tile.resource = 0
                     tile.type = TileType.BASE
                     tile.root.resource_tile = None
 
@@ -271,7 +286,7 @@ class Game:
             if self.decay_cooldown < 0:
                 self.decay_cooldown = co.STARTING_DECAY_COOLDOWN
 
-        self.resources_tiles = [tile for tile in self.resources_tiles if tile.resources > 0]
+        self.resources_tiles = [tile for tile in self.resources_tiles if tile.resource > 0]
 
 
     def update_roots(self):
