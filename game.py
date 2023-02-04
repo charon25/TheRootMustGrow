@@ -110,6 +110,8 @@ class Game:
             if mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET > self.max_visible_tiles:
                 self.max_visible_tiles = mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET
 
+            new_root.parent.increase_width()
+
         self.roots.append(new_root)
         return True
 

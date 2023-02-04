@@ -104,13 +104,21 @@ class Root:
                 return True
         return False
 
+    def increase_width(self, distance: int = 1):
+        if self.width >= 1 + distance:
+            return
+
+        self.width = 1 + distance
+        if self.width >= co.MAX_ROOT_WIDTH:
+            self.width = co.MAX_ROOT_WIDTH
+        self._update_texture()
+        
+        if self.parent is not None:
+            self.parent.increase_width(distance + 1)
+
 
     def _update_texture(self):
         self.texture, self.x, self.y = update_texture(self.start_x, self.start_y, self.end_x, self.end_y, True, self.width)
-
-    def increase_width(self):
-        self.width += 1
-        self._update_texture()
 
     def is_visible(self, current_height: int):
         bottom = self.y + self.texture_height - current_height

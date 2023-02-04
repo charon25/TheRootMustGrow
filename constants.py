@@ -20,7 +20,7 @@ ROOT_HEIGHTS: dict[int, int] = {
     3: 20,
     4: 25
 }
-GHOST_ROOT_HEIGHT = ROOT_HEIGHTS[1]
+MAX_ROOT_WIDTH = max(ROOT_HEIGHTS.keys())
 MAX_ROOT_LENGTH = 350
 
 STARTING_DECAY_COOLDOWN = 300
@@ -55,7 +55,7 @@ STARTING_ABSORPTION_RATE: dict[ResourceType, float] = {
     ResourceType.PHOSPHORUS: 0.2
 }
 STARTING_CONSUMPTION_RATE: dict[ResourceType, float] = {
-    ResourceType.WATER: 0.01,
+    ResourceType.WATER: 0.001,
     ResourceType.NITROGEN: 0.0001,
     ResourceType.PHOSPHORUS: 0.0001
 }
