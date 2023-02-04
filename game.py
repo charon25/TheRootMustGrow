@@ -274,10 +274,16 @@ class Game:
         # Resources
         font = utils.get_font(15)
         for tile in resource_tiles:
-            quantity_text_surface = font.render(str(ceil(tile.resource)), False, co.RESOURCE_FONT_COLOR[tile.get_resource_type()])
+            quantity_text_surface_white = font.render(str(ceil(tile.resource)), False, (255, 255, 255))
+            quantity_text_surface_black = font.render(str(ceil(tile.resource)), False, (0, 0, 0))
             y = tile.y * co.TILE - 2
-            x = tile.x * co.TILE + co.TILE / 2 - quantity_text_surface.get_width() / 2
-            game_surface.blit(quantity_text_surface, (x, y - self.current_height_floored))
+            x = tile.x * co.TILE + co.TILE / 2 - quantity_text_surface_black.get_width() / 2 - self.current_height_floored
+            game_surface.blit(quantity_text_surface_black, (x + 1, y + 1))
+            game_surface.blit(quantity_text_surface_black, (x + 1, y - 1))
+            game_surface.blit(quantity_text_surface_black, (x - 1, y + 1))
+            game_surface.blit(quantity_text_surface_black, (x - 1, y - 1))
+
+            game_surface.blit(quantity_text_surface_white, (x, y))
 
         # RootGhost
         if self.root_ghost.texture_ready:

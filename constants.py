@@ -72,7 +72,7 @@ FONT_PATH = 'resources/font/monogramextended.ttf'
 RESOURCE_FONT_COLOR: dict[ResourceType, tuple[int, int, int]] = {
     ResourceType.WATER: (0, 0, 0),
     ResourceType.NITROGEN: (255, 255, 255),
-    ResourceType.PHOSPHORUS: (0, 0, 0)
+    ResourceType.PHOSPHORUS: (255, 255, 255)
 }
 
 # UI
