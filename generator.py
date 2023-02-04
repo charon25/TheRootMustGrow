@@ -3,8 +3,9 @@ from random import randint, random, choice
 import pygame as pyg
 import pyghelper
 
-from tile import Tile, TileType
 import constants as co
+import textures as tx
+from tile import Tile, TileType
 
 
 class TerrainGenerator:
@@ -12,10 +13,14 @@ class TerrainGenerator:
         self.depth: int = 0
 
     def generate_tile(self, x: int, y: int):
-        tile_type = choice([TileType.BASE, TileType.BASE2] * 10 + list(TileType))
+        tile_type = choice([TileType.BASE] * 10 + list(TileType))
         tile = Tile(tile_type, x, y)
+
         if tile.is_resource_tile():
             tile.resource = 100 # TODO update
+
+        if tile.type == TileType.BASE:
+            tile.texture = choice(tx.BASE_TILES)
         return tile
 
     def starting_terrain(self) -> list[list[Tile]]:

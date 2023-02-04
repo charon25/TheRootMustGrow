@@ -273,7 +273,7 @@ class Game:
         font = utils.get_font(15)
         for tile in resource_tiles:
             quantity_text_surface = font.render(str(ceil(tile.resource)), False, co.RESOURCE_FONT_COLOR[tile.get_resource_type()])
-            y = tile.y * co.TILE + co.TILE / 2 - quantity_text_surface.get_height() / 2
+            y = tile.y * co.TILE - 2
             x = tile.x * co.TILE + co.TILE / 2 - quantity_text_surface.get_width() / 2
             game_surface.blit(quantity_text_surface, (x, y - self.current_height_floored))
 
@@ -290,7 +290,7 @@ class Game:
             x, y = co.RESOURCE_TEXT_COORDS[resource]
             game_surface.blit(resource_text_surface, (x, y + co.UI_TOP + co.TILE / 2 - resource_text_surface.get_height() / 2))
 
-        total_resources_text_surface = font.render(f'Total roots : {self.total_roots:.0f}', False, (0, 0, 0))
+        total_resources_text_surface = font.render(f'Total roots : {self.total_roots / co.TILE:.0f}', False, (0, 0, 0))
         game_surface.blit(total_resources_text_surface, (co.TOTAL_ROOTS_TEXT_COORD[0], co.TOTAL_ROOTS_TEXT_COORD[1] + co.UI_TOP))
 
         self.screen.blit(game_surface, next(self.offset))
@@ -309,7 +309,6 @@ class Game:
                     self.resources[resource] += tile.resource
                     self.total_gained[resource] += tile.resource
                     tile.resource = 0
-                    tile.type = TileType.BASE
                     tile.root.resource_tile = None
 
         self.total_roots = sum(root.length for root in self.roots)

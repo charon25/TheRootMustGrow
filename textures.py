@@ -6,11 +6,18 @@ import pyghelper
 BACKGROUND = pyghelper.Image.create('resources/textures/background.png')
 UI_BACKGROUND = pyghelper.Image.create('resources/textures/ui_background.png')
 
-BASE_TILE = pyghelper.Image.create('resources/textures/base_tile.png')
-BASE_TILE_2 = pyghelper.Image.create('resources/textures/base_tile_2.png')
+BASE_TILE_TEXTURES_COUNT = 3
+BASE_TILES = [pyghelper.Image.create(f'resources/textures/tiles/base_{i}.png') for i in range(1, BASE_TILE_TEXTURES_COUNT + 1)]
+
 ROOT_TILE = pyghelper.Image.create('resources/textures/root_tile.png')
+
+EMPTY_TILE = pyghelper.Image.create('resources/textures/tiles/empty.png')
+
 WATER_TILE = pyghelper.Image.create('resources/textures/water.png')
-NITROGEN_TILE = pyghelper.Image.create('resources/textures/nitrogen.png')
+
+NITROGEN_TILE_TEXTURES_COUNT = 3
+NITROGEN_TILES = [pyghelper.Image.create(f'resources/textures/tiles/nitrogen_{i}.png') for i in range(1, NITROGEN_TILE_TEXTURES_COUNT + 1)]
+
 PHOSPORUS_TILE = pyghelper.Image.create('resources/textures/phosporus.png')
 
 ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_w{i}.png') for i in (1, 2, 3, 4)}
