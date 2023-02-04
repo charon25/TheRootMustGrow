@@ -323,6 +323,7 @@ class Game:
             if self.decay_cooldown < 0:
                 smallest_resource = min(quantity for _, quantity in self.resources.items())
                 self.decay_cooldown = utils.clamped_lerp(smallest_resource, co.MIN_DECAY_COOLDOWN_RESOURCE, 0, co.MIN_DECAY_COOLDOWN, co.STARTING_DECAY_COOLDOWN)
+                print(self.decay_cooldown)
 
         self.resources_tiles = [tile for tile in self.resources_tiles if tile.resource > 0]
 
@@ -330,11 +331,11 @@ class Game:
     def update_roots(self):
         if self.decay_cooldown > 0:
             self.decay_cooldown -= 1
-        
+
         if self.decay_cooldown == 0:
-            self.delete_root(self.roots[-1])
-            if len(self.roots) == 0:
+            if len(self.roots) <= 1:
                 self.game_over()
+            self.delete_root(self.roots[-1])
             self.decay_cooldown = -1
 
 

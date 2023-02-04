@@ -14,4 +14,6 @@ NITROGEN_TILE = pyghelper.Image.create('resources/textures/nitrogen.png')
 PHOSPORUS_TILE = pyghelper.Image.create('resources/textures/phosporus.png')
 
 ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_w{i}.png') for i in (1, 2, 3, 4)}
-RED_ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_red_w{i}.png') for i in (1, 2, 3, 4)}
+RED_ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_red_w1.png') for i in (1, 2, 3, 4)}
+ROOTS_END: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/end_w{i}.png') for i in (1, 2, 3, 4)}
+RED_ROOTS_END: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/end_red_w1.png') for i in (1, 2, 3, 4)}

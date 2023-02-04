@@ -26,9 +26,10 @@ def update_texture(start_x: int, start_y: int, end_x: int, end_y: int, correct: 
     angle = -atan2(end_y - start_y, end_x - start_x) # radians
 
     texture = Surface((distance, height), flags=pyg.SRCALPHA)
-    pyg.draw.polygon(texture, (255, 255, 255, 255), ((0, 0), (distance, height / 2 - 1), (distance, height / 2 + 1), (0, height)))
     surface = tx.ROOTS[width] if correct else tx.RED_ROOTS[width]
-    texture.blit(surface, pyg.Rect(0, 0, distance, height), special_flags=pyg.BLEND_RGBA_MIN)
+    end = tx.ROOTS_END[width] if correct else tx.RED_ROOTS_END[width]
+    texture.blit(surface, (0, 0), area=pyg.Rect(0, 0, distance - co.ROOT_END_LENGTH[width], height))
+    texture.blit(end, (texture.get_width() - co.ROOT_END_LENGTH[width], 0))
     texture = pyg.transform.rotate(texture, angle * 180 / pi)
 
     width, height = texture.get_width(), texture.get_height()
