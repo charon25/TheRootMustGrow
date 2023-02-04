@@ -19,7 +19,8 @@ WATER_TILES = [pyghelper.Image.create(f'resources/textures/tiles/water_{i}.png')
 NITROGEN_TILE_TEXTURES_COUNT = 3
 NITROGEN_TILES = [pyghelper.Image.create(f'resources/textures/tiles/nitrogen_{i}.png') for i in range(1, NITROGEN_TILE_TEXTURES_COUNT + 1)]
 
-PHOSPORUS_TILE = pyghelper.Image.create('resources/textures/phosporus.png')
+PHOSPHORUS_TILE_TEXTURES_COUNT = 3
+PHOSPHORUS_TILES = [pyghelper.Image.create(f'resources/textures/tiles/phosphorus_{i}.png') for i in range(1, WATER_TILE_TEXTURES_COUNT + 1)]
 
 ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_w{i}.png') for i in (1, 2, 3, 4)}
 RED_ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_red_w1.png') for i in (1, 2, 3, 4)}

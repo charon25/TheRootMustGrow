@@ -24,7 +24,7 @@ def get_random_texture(tile_type: TileType) -> Surface:
         return choice(tx.NITROGEN_TILES)
 
     if tile_type == TileType.PHOSPHORUS:
-        return tx.PHOSPORUS_TILE
+        return choice(tx.PHOSPHORUS_TILES)
 
 
 class Tile:
