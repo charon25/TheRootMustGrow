@@ -6,6 +6,7 @@ import pyghelper
 
 import constants as co
 from generator import TerrainGenerator
+from particle import Particle
 from root import compute_crossing_tiles, RootGhost, Root
 from tile import Tile, TileType
 import textures as tx
@@ -66,6 +67,9 @@ class Game:
         self.decay_cooldown = -1
         self.root_id = 0
         self.total_roots: float = 0
+
+        # Particules
+        self.particles: list[Particle] = list()
 
         self.create_initial_roots()
 
@@ -255,7 +259,7 @@ class Game:
 
     def screen_shake(self, amount):
         for _ in range(co.SCREENSHAKE_COUNT):
-            x, y = random.random() * 2 * amount - amount, random.random() * 2 * amount - amount
+            x, y = utils.random_sym_float(amount), utils.random_sym_float(amount)
             yield (x, y)
         while True:
             yield (0, 0)
@@ -282,6 +286,10 @@ class Game:
         for root in self.roots:
             if root.is_visible(self.current_height_floored):
                 game_surface.blit(root.texture, (root.x, root.y - self.current_height_floored))
+
+        # Particules
+
+        game_surface.blits([(particle.texture, (particle.x, particle.y - self.current_height_floored)) for particle in self.particles if particle.is_visible(self.current_height_floored)])
 
         # Resources
         font = utils.get_font(15)
@@ -321,6 +329,7 @@ class Game:
         for tile in self.resources_tiles:
             if tile.resource >= 0:
                 resource = co.ResourceType(tile.type.value)
+                self.particles.extend(Particle.generate_extract_particles(tile.x * co.TILE + co.TILE / 2, tile.y * co.TILE + co.TILE / 2, resource))
                 if tile.resource > self.absorption_rate[resource]:
                     tile.resource -= self.absorption_rate[resource]
                     self.resources[resource] += self.absorption_rate[resource]
@@ -362,17 +371,24 @@ class Game:
         print('GAME OVER')
         self.stop()
 
-
-    def loop(self) -> None:
-        self.clock.tick(60)
-        self.events.listen()
-
+    def loop_game(self):
         self.generate_missing()
 
         self.update_resources()
         self.update_roots()
 
+        for particle in self.particles:
+            particle.age()
+            if particle.done:
+                self.particles.remove(particle)
+
         self.draw_terrain()
+
+    def loop(self) -> None:
+        self.clock.tick(60)
+        self.events.listen()
+
+        self.loop_game()
 
         pyg.display.update()
 

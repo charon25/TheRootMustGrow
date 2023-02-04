@@ -1,3 +1,6 @@
+from math import cos, pi, sin
+from random import random
+
 import pygame as pyg
 
 import constants as co
@@ -23,3 +26,17 @@ def clamped_lerp(x: float, min_x: float, max_x: float, min_y: float, max_y: floa
         return max_y
 
     return (x - min_x) / (max_x - min_x) * (max_y - min_y) + min_y
+
+def generate_pos_velocity_in_disk(disk_radius: float, x_center: float, y_center: float, vx: float, vy: float) -> tuple[float, float, float, float]:
+    radius = disk_radius * random()
+    angle = random() * 2 * pi
+
+    return (
+        x_center + radius * cos(angle),
+        y_center + radius * sin(angle),
+        vx * cos(angle),
+        vy * sin(angle)
+    )
+
+def random_sym_float(amplitude: float):
+    return 2 * random() * amplitude - amplitude
