@@ -13,7 +13,8 @@ ROOT_TILE = pyghelper.Image.create('resources/textures/root_tile.png')
 
 EMPTY_TILE = pyghelper.Image.create('resources/textures/tiles/empty.png')
 
-WATER_TILE = pyghelper.Image.create('resources/textures/water.png')
+WATER_TILE_TEXTURES_COUNT = 3
+WATER_TILES = [pyghelper.Image.create(f'resources/textures/tiles/water_{i}.png') for i in range(1, WATER_TILE_TEXTURES_COUNT + 1)]
 
 NITROGEN_TILE_TEXTURES_COUNT = 3
 NITROGEN_TILES = [pyghelper.Image.create(f'resources/textures/tiles/nitrogen_{i}.png') for i in range(1, NITROGEN_TILE_TEXTURES_COUNT + 1)]

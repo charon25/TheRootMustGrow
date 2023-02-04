@@ -1,4 +1,5 @@
 from math import atan2, ceil, cos, dist, sin
+import random
 import pygame as pyg
 from pygame import Surface
 import pyghelper
@@ -260,9 +261,10 @@ class Game:
         for y in range(co.TILES_Y - co.UI_HEIGHT):
             row = self.terrain[y + start_y]
             for x, tile in enumerate(row):
-                if tile.is_resource_tile():
+                game_surface.blit(tile.texture, (x * co.TILE, y * co.TILE))
+                if tile.is_resource_tile() and tile.resource > 0:
                     resource_tiles.append(tile)
-                game_surface.blit(tile.get_texture(), (x * co.TILE, y * co.TILE))
+                    game_surface.blit(tile.resource_textures, (x * co.TILE, y * co.TILE))
 
         # Roots
         for root in self.roots:

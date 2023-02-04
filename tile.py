@@ -17,11 +17,8 @@ class TileType(Enum):
 
 
 def get_random_texture(tile_type: TileType) -> Surface:
-    if tile_type == TileType.BASE:
-        return choice(tx.BASE_TILES)
-    
     if tile_type == TileType.WATER:
-        return tx.WATER_TILE
+        return choice(tx.WATER_TILES)
     
     if tile_type == TileType.NITROGEN:
         return choice(tx.NITROGEN_TILES)
@@ -38,7 +35,8 @@ class Tile:
         self.resource: int = -1
         self.x = x
         self.y = y
-        self.texture: Surface = get_random_texture(self.type)
+        self.texture: Surface = choice(tx.BASE_TILES)
+        self.resource_textures: Surface = get_random_texture(self.type)
 
     def get_texture(self) -> Surface:
         if self.is_resource_tile():
