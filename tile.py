@@ -26,8 +26,8 @@ class Tile:
         self.y = y
 
     def get_texture(self) -> Surface:
-        # if self.has_root:
-        #     return tx.ROOT_TILE
+        if self.has_root:
+            return tx.ROOT_TILE
         if self.type == TileType.BASE:
             return tx.BASE_TILE
         elif self.type == TileType.BASE2:

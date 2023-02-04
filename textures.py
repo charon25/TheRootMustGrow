@@ -2,6 +2,7 @@ import pyghelper
 
 
 BACKGROUND = pyghelper.Image.create('resources/textures/background.png')
+UI_BACKGROUND = pyghelper.Image.create('resources/textures/ui_background.png')
 
 BASE_TILE = pyghelper.Image.create('resources/textures/base_tile.png')
 BASE_TILE_2 = pyghelper.Image.create('resources/textures/base_tile_2.png')

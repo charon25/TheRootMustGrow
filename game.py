@@ -8,7 +8,7 @@ from generator import TerrainGenerator
 from root import compute_crossing_tiles, RootGhost, Root
 from tile import Tile, TileType
 import textures as tx
-from utils import floor_n, get_font
+import utils
 
 
 
@@ -56,12 +56,15 @@ class Game:
         self.resources_tiles: list[Tile] = list()
         self.absorption_rate: dict[co.ResourceType, float] = co.STARTING_ABSORPTION_RATE.copy()
         self.consumption_rate: dict[co.ResourceType, float] = co.STARTING_CONSUMPTION_RATE.copy()
+        self.total_gained: dict[co.ResourceType, float] = {resource: 0 for resource in co.ResourceType}
+        self.total_consummed: dict[co.ResourceType, float] = {resource: 0 for resource in co.ResourceType}
 
         # Roots
         self.root_ghost: RootGhost = RootGhost()
         self.roots: list[Root] = list()
         self.decay_cooldown = -1
         self.root_id = 0
+        self.total_roots: float = 0
 
         self.create_initial_roots()
 
@@ -118,12 +121,44 @@ class Game:
         if not tile.has_root:
             return
 
-        if not tile.root.contains_point(mouse_x, mouse_y + self.current_height):
+        if not tile.root.contains_point(mouse_x, mouse_y + self.current_height_floored):
             return
 
-        x = co.TILE / 2 + floor_n(mouse_x, co.TILE)
-        y = co.TILE / 2 + floor_n(mouse_y, co.TILE)
-        self.root_ghost.enable(x, y + self.current_height_floored, tile.root)
+        x = co.TILE / 2 + utils.floor_n(mouse_x, co.TILE)
+        y = co.TILE / 2 + utils.floor_n(mouse_y, co.TILE)
+
+        if tile.root.parent is not None and tile.root.parent.contains_point(mouse_x, mouse_y + self.current_height_floored):
+            self.root_ghost.enable(x, y + self.current_height_floored, tile.root.parent)
+        else:
+            self.root_ghost.enable(x, y + self.current_height_floored, tile.root)
+
+    def delete_root(self, deleted_root: Root):
+            if deleted_root.not_cuttable or deleted_root.parent is None:
+                return
+
+            if any(root.is_child(deleted_root) for root in self.roots if root is not deleted_root):
+                return
+
+            for x_cross, y_cross in deleted_root.crossing_tiles:
+                if not (x_cross, y_cross) in deleted_root.parent.crossing_tiles:
+                    self.terrain[y_cross][x_cross].has_root = False
+                    self.terrain[y_cross][x_cross].root = None
+                else:
+                    self.terrain[y_cross][x_cross].root = deleted_root.parent
+
+            if deleted_root.resource_tile is not None:
+                try:
+                    self.resources_tiles.remove(deleted_root.resource_tile)
+                except ValueError:
+                    pass
+
+            if self.root_ghost.enabled and self.root_ghost.starting_root is deleted_root:
+                self.root_ghost.disable()
+
+            try:
+                self.roots.remove(deleted_root)
+            except ValueError:
+                pass
 
     def mouseup_game(self, data: dict[str, int]):
         if data['button'] == co.LEFT_CLICK:
@@ -133,8 +168,8 @@ class Game:
                 self.create_root_ghost(*data['pos'])
             else:
                 if not self.is_dragging and self.root_ghost.correct:
-                    x = co.TILE / 2 + floor_n(data['pos'][0], co.TILE)
-                    y = co.TILE / 2 + floor_n(data['pos'][1], co.TILE)
+                    x = co.TILE / 2 + utils.floor_n(data['pos'][0], co.TILE)
+                    y = co.TILE / 2 + utils.floor_n(data['pos'][1], co.TILE)
                     self.root_ghost.set_endpoint(x, y + self.current_height_floored)
                     self.create_root_from_ghost(self.root_ghost, data['pos'][0], data['pos'][1] + self.current_height_floored)
                     self.root_ghost.disable()
@@ -151,26 +186,7 @@ class Game:
                 return
 
             cut_root = self.terrain[tile_y][tile_x].root
-            if cut_root.not_cuttable or cut_root.parent is None:
-                return
-
-            if any(root.is_child(cut_root) for root in self.roots if root is not cut_root):
-                return
-
-            for x_cross, y_cross in cut_root.crossing_tiles:
-                if not (x_cross, y_cross) in cut_root.parent.crossing_tiles:
-                    self.terrain[y_cross][x_cross].has_root = False
-                    self.terrain[y_cross][x_cross].root = None
-                else:
-                    self.terrain[y_cross][x_cross].root = cut_root.parent
-
-            if cut_root.resource_tile is not None:
-                # try:
-                self.resources_tiles.remove(cut_root.resource_tile)
-                # except ValueError:
-                #     pass
-
-            self.roots.remove(cut_root)
+            self.delete_root(cut_root)
 
 
     def scroll_screen(self, quantity: int):
@@ -180,12 +196,15 @@ class Game:
         elif self.current_height + co.HEIGHT > self.max_visible_tiles * co.TILE:
             self.current_height = self.max_visible_tiles * co.TILE - co.HEIGHT
 
-        self.current_height_floored = floor_n(self.current_height, co.TILE)
+        self.current_height_floored = utils.floor_n(self.current_height, co.TILE)
 
         x, y = pyg.mouse.get_pos()
         self.root_ghost.set_endpoint(x, y + self.current_height)
 
     def is_root_ghost_correct(self, mouse_x: int, mouse_y: int):
+        if mouse_y - self.current_height >= co.HEIGHT - co.UI_HEIGHT * co.TILE:
+            return False
+
         if mouse_y // co.TILE <= self.root_ghost.start_y // co.TILE:
             return False
 
@@ -229,14 +248,14 @@ class Game:
 
     def draw_terrain(self):
         game_surface = pyg.Surface((co.WIDTH, co.HEIGHT), pyg.SRCALPHA)
-        game_surface.blit(tx.BACKGROUND, (0, 0))
+        pyg.draw.rect(game_surface, (0, 0, 0), pyg.Rect(0, 0, co.WIDTH, co.HEIGHT))
 
         # Terrain
         start_y = self.current_height // co.TILE
 
         resource_tiles: list[Tile] = []
 
-        for y in range(co.TILES_Y):
+        for y in range(co.TILES_Y - co.UI_HEIGHT):
             row = self.terrain[y + start_y]
             for x, tile in enumerate(row):
                 if tile.is_resource_tile():
@@ -249,7 +268,7 @@ class Game:
                 game_surface.blit(root.texture, (root.x, root.y - self.current_height_floored))
 
         # Resources
-        font = get_font(15)
+        font = utils.get_font(15)
         for tile in resource_tiles:
             quantity_text_surface = font.render(str(ceil(tile.resource)), False, co.RESOURCE_FONT_COLOR[tile.get_resource_type()])
             y = tile.y * co.TILE + co.TILE / 2 - quantity_text_surface.get_height() / 2
@@ -260,31 +279,48 @@ class Game:
         if self.root_ghost.texture_ready:
             game_surface.blit(self.root_ghost.texture, (self.root_ghost.x, self.root_ghost.y - self.current_height_floored))
 
+        # UI
+        game_surface.blit(tx.UI_BACKGROUND, (0, co.UI_TOP))
+
+        font = utils.get_font(25)
+        for resource in co.ResourceType:
+            resource_text_surface = font.render(f'{co.RESOURCE_TEXT_NAME[resource]}{co.RESOURCE_SPACES[resource]}  {self.resources[resource]:.0f} (- {self.total_consummed[resource] * 60:.1f}/s) (+ {self.total_gained[resource] * 60:.1f}/s)', False, (0, 0, 0))
+            x, y = co.RESOURCE_TEXT_COORDS[resource]
+            game_surface.blit(resource_text_surface, (x, y + co.UI_TOP + co.TILE / 2 - resource_text_surface.get_height() / 2))
+
+        total_resources_text_surface = font.render(f'Total roots : {self.total_roots:.0f}', False, (0, 0, 0))
+        game_surface.blit(total_resources_text_surface, (co.TOTAL_ROOTS_TEXT_COORD[0], co.TOTAL_ROOTS_TEXT_COORD[1] + co.UI_TOP))
+
         self.screen.blit(game_surface, next(self.offset))
 
 
     def update_resources(self):
+        self.total_gained = {resource: 0 for resource in co.ResourceType}
         for tile in self.resources_tiles:
             if tile.resource >= 0:
                 resource = co.ResourceType(tile.type.value)
                 if tile.resource > self.absorption_rate[resource]:
                     tile.resource -= self.absorption_rate[resource]
                     self.resources[resource] += self.absorption_rate[resource]
+                    self.total_gained[resource] += self.absorption_rate[resource]
                 else:
                     self.resources[resource] += tile.resource
+                    self.total_gained[resource] += tile.resource
                     tile.resource = 0
                     tile.type = TileType.BASE
                     tile.root.resource_tile = None
 
-        total_roots = sum(root.length for root in self.roots)
+        self.total_roots = sum(root.length for root in self.roots)
         for resource in co.ResourceType:
-            self.resources[resource] -= total_roots * self.consumption_rate[resource]
+            self.resources[resource] -= self.total_roots * self.consumption_rate[resource]
+            self.total_consummed[resource] = self.total_roots * self.consumption_rate[resource]
 
         if all(quantity > 0 for _, quantity in self.resources.items()):
             self.decay_cooldown = -1
         else:
             if self.decay_cooldown < 0:
-                self.decay_cooldown = co.STARTING_DECAY_COOLDOWN
+                smallest_resource = min(quantity for _, quantity in self.resources.items())
+                self.decay_cooldown = utils.clamped_lerp(smallest_resource, co.MIN_DECAY_COOLDOWN_RESOURCE, 0, co.MIN_DECAY_COOLDOWN, co.STARTING_DECAY_COOLDOWN)
 
         self.resources_tiles = [tile for tile in self.resources_tiles if tile.resource > 0]
 
@@ -294,10 +330,10 @@ class Game:
             self.decay_cooldown -= 1
         
         if self.decay_cooldown == 0:
-            self.roots.pop()
+            self.delete_root(self.roots[-1])
             if len(self.roots) == 0:
                 self.game_over()
-            self.decay_cooldown = co.STARTING_DECAY_COOLDOWN
+            self.decay_cooldown = -1
 
 
     def game_over(self):

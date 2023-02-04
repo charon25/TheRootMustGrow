@@ -15,3 +15,11 @@ def get_font(size, bold=False, italic=False, underline=False):
     font.set_italic(italic)
     font.set_underline(underline)
     return font
+
+def clamped_lerp(x: float, min_x: float, max_x: float, min_y: float, max_y: float) -> float:
+    if x < min_x:
+        return min_y
+    if x > max_x:
+        return max_y
+
+    return (x - min_x) / (max_x - min_x) * (max_y - min_y) + min_y

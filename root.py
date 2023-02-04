@@ -61,7 +61,10 @@ class Root:
 
         x_tile, y_tile = x // co.TILE, y // co.TILE
         delta_x, delta_y = end_x - start_x, end_y - start_y
-        distance = dist((end_x, start_x), (end_y, start_y))
+        distance = ((end_x - start_x) ** 2 + (end_y - start_y) ** 2) ** 0.5
+        if distance <= 1e-7:
+            return (int(start_x // co.TILE), int(start_y // co.TILE)) == (x_tile, y_tile)
+
         dx, dy = delta_x / distance, delta_y / distance
         x, y = start_x, start_y
         total_dy = 0
