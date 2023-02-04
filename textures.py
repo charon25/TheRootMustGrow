@@ -1,3 +1,5 @@
+
+import pygame
 import pyghelper
 
 
@@ -11,5 +13,5 @@ WATER_TILE = pyghelper.Image.create('resources/textures/water.png')
 NITROGEN_TILE = pyghelper.Image.create('resources/textures/nitrogen.png')
 PHOSPORUS_TILE = pyghelper.Image.create('resources/textures/phosporus.png')
 
-BASE_ROOT = pyghelper.Image.create('resources/textures/base_root.png')
-BASE_ROOT_RED = pyghelper.Image.create('resources/textures/base_root_red.png')
+ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_w{i}.png') for i in (1, 2, 3, 4)}
+RED_ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_red_w{i}.png') for i in (1, 2, 3, 4)}

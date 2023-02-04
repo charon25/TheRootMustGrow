@@ -20,6 +20,23 @@ def compute_crossing_tiles(start_tile_x: int, start_tile_y: int, end_tile_x: int
     return list(points)
 
 
+def update_texture(start_x: int, start_y: int, end_x: int, end_y: int, correct: bool, width: int) -> tuple[Surface, float, float]:
+    height = co.ROOT_HEIGHTS[width]
+    distance = dist((end_x, end_y), (start_x, start_y))
+    angle = -atan2(end_y - start_y, end_x - start_x) # radians
+
+    texture = Surface((distance, height), flags=pyg.SRCALPHA)
+    pyg.draw.polygon(texture, (255, 255, 255, 255), ((0, 0), (distance, height / 2 - 1), (distance, height / 2 + 1), (0, height)))
+    surface = tx.ROOTS[width] if correct else tx.RED_ROOTS[width]
+    texture.blit(surface, pyg.Rect(0, 0, distance, height), special_flags=pyg.BLEND_RGBA_MIN)
+    texture = pyg.transform.rotate(texture, angle * 180 / pi)
+
+    width, height = texture.get_width(), texture.get_height()
+    x = start_x - width / 2 + distance / 2 * cos(angle)
+    y = start_y - height / 2 - distance / 2 * sin(angle)
+
+    return (texture, x, y)
+
 class Root:
     def __init__(self, id: int, root_ghost: 'RootGhost', crossing_tiles: list[tuple[int, int]], not_cuttable: bool = False) -> None:
         self.id: int = id
@@ -89,7 +106,7 @@ class Root:
 
 
     def _update_texture(self):
-        pass
+        self.texture, self.x, self.y = update_texture(self.start_x, self.start_y, self.end_x, self.end_y, True, self.width)
 
     def increase_width(self):
         self.width += 1
@@ -140,17 +157,6 @@ class RootGhost:
         if not self.enabled:
             return
         
-        height = co.GHOST_ROOT_HEIGHT
-        distance = dist((self.end_x, self.end_y), (self.start_x, self.start_y))
-        angle = -atan2(self.end_y - self.start_y, self.end_x - self.start_x) # radians
+        self.texture, self.x, self.y = update_texture(self.start_x, self.start_y, self.end_x, self.end_y, self.correct, 1)
 
-        self.texture = Surface((distance, height), flags=pyg.SRCALPHA)
-        pyg.draw.polygon(self.texture, (255, 255, 255, 255), ((0, 0), (distance, height / 2 - 1), (distance, height / 2 + 1), (0, height)))
-        self.texture.blit(tx.BASE_ROOT if self.correct else tx.BASE_ROOT_RED, pyg.Rect(0, 0, distance, height), special_flags=pyg.BLEND_RGBA_MIN)
-        self.texture = pyg.transform.rotate(self.texture, angle * 180 / pi)
-
-        width, height = self.texture.get_width(), self.texture.get_height()
-        self.x = self.start_x - width / 2 + distance / 2 * cos(angle)
-        self.y = self.start_y - height / 2 - distance / 2 * sin(angle)
-        
         self.texture_ready = True
