@@ -344,6 +344,9 @@ class Game:
         total_resources_text_surface = font.render(f'Total roots : {self.total_roots / co.TILE:.0f}', False, (0, 0, 0))
         game_surface.blit(total_resources_text_surface, (co.TOTAL_ROOTS_TEXT_COORD[0], co.TOTAL_ROOTS_TEXT_COORD[1] + co.UI_TOP))
 
+        fps_text_surface = font.render(f'{self.fps:.0f} FPS', False, (0, 0, 0))
+        game_surface.blit(fps_text_surface, (co.FPS_COORDS[0], co.FPS_COORDS[1] + co.UI_TOP))
+
         self.screen.blit(game_surface, next(self.offset))
 
 
@@ -407,7 +410,9 @@ class Game:
         self.draw_terrain()
 
     def loop(self) -> None:
-        self.clock.tick(60)
+        dt = self.clock.tick(60)
+        print(dt)
+        self.fps = 1000 / dt
         self.events.listen()
 
         self.loop_game()

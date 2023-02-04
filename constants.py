@@ -88,6 +88,8 @@ RESOURCE_TEXT_COORDS: dict[ResourceType, tuple[int, int]] = {
 
 TOTAL_ROOTS_TEXT_COORD = (5, -4)
 
+FPS_COORDS = (740, 100)
+
 # Shake
 SCREENSHAKE_COUNT = 5
 SCREENSHAKE_LENGTH_MAX = 200
