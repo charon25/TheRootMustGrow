@@ -301,9 +301,11 @@ class Game:
             for x, tile in enumerate(row):
                 game_surface.blit(tile.texture, (x * co.TILE, y * co.TILE))
                 if tile.type != TileType.BASE:
-                    if (tile.is_resource_tile() and tile.resource > 0):
+                    has_resources = tile.is_resource_tile() and tile.resource > 0
+                    if has_resources:
                         resource_tiles.append(tile)
-                    game_surface.blit(tile.resource_textures, (x * co.TILE, y * co.TILE))
+                    if has_resources or tile.type == TileType.ROCK:
+                        game_surface.blit(tile.resource_textures, (x * co.TILE, y * co.TILE))
 
         # Roots
         for root in self.roots:
@@ -319,8 +321,8 @@ class Game:
         for tile in resource_tiles:
             quantity_text_surface_white = font.render(str(ceil(tile.resource)), False, (255, 255, 255))
             quantity_text_surface_black = font.render(str(ceil(tile.resource)), False, (0, 0, 0))
-            y = tile.y * co.TILE - 2
-            x = tile.x * co.TILE + co.TILE / 2 - quantity_text_surface_black.get_width() / 2 - self.current_height_floored
+            x = tile.x * co.TILE + co.TILE / 2 - quantity_text_surface_black.get_width() / 2
+            y = tile.y * co.TILE - 2 - self.current_height_floored
             game_surface.blit(quantity_text_surface_black, (x + 1, y + 1))
             game_surface.blit(quantity_text_surface_black, (x + 1, y - 1))
             game_surface.blit(quantity_text_surface_black, (x - 1, y + 1))
@@ -411,7 +413,6 @@ class Game:
 
     def loop(self) -> None:
         dt = self.clock.tick(60)
-        print(dt)
         self.fps = 1000 / dt
         self.events.listen()
 
