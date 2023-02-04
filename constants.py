@@ -61,7 +61,7 @@ STARTING_ABSORPTION_RATE: dict[ResourceType, float] = {
     ResourceType.PHOSPHORUS: 0.2
 }
 STARTING_CONSUMPTION_RATE: dict[ResourceType, float] = {
-    ResourceType.WATER: 0.000000001,
+    ResourceType.WATER: 0.00000001,
     ResourceType.NITROGEN: 0.000000001,
     ResourceType.PHOSPHORUS: 0.000000001
 }
@@ -87,3 +87,8 @@ RESOURCE_TEXT_COORDS: dict[ResourceType, tuple[int, int]] = {
 }
 
 TOTAL_ROOTS_TEXT_COORD = (5, -4)
+
+# Shake
+SCREENSHAKE_COUNT = 5
+SCREENSHAKE_LENGTH_MAX = 200
+SCREENSHAKE_AMOUNT_MAX = 4

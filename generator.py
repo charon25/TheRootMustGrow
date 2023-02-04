@@ -27,7 +27,7 @@ class TerrainGenerator:
         self.depth = -1
         terrain: list[list[Tile]] = []
         for y in range(co.TILES_Y):
-            terrain.append(next(self))            
+            terrain.append(next(self))
 
         return terrain
 

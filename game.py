@@ -113,6 +113,8 @@ class Game:
 
             new_root.parent.increase_width()
 
+            self.offset = self.screen_shake(utils.clamped_lerp(new_root.length, 0, co.SCREENSHAKE_LENGTH_MAX, 0, co.SCREENSHAKE_AMOUNT_MAX))
+
         self.roots.append(new_root)
         return True
 
@@ -135,7 +137,7 @@ class Game:
         else:
             self.root_ghost.enable(x, y + self.current_height_floored, tile.root)
 
-    def delete_root(self, deleted_root: Root):
+    def delete_root(self, deleted_root: Root, is_dead: bool):
             if deleted_root.not_cuttable or deleted_root.parent is None:
                 return
 
@@ -162,6 +164,8 @@ class Game:
                 self.roots.remove(deleted_root)
             except ValueError:
                 pass
+            else:
+                self.offset = self.screen_shake(co.SCREENSHAKE_AMOUNT_MAX)
 
     def mouseup_game(self, data: dict[str, int]):
         if data['button'] == co.LEFT_CLICK:
@@ -189,7 +193,7 @@ class Game:
                 return
 
             cut_root = self.terrain[tile_y][tile_x].root
-            self.delete_root(cut_root)
+            self.delete_root(cut_root, False)
 
 
     def scroll_screen(self, quantity: int):
@@ -220,7 +224,7 @@ class Game:
         for tile_x, tile_y in self.get_crossing_tile_root_ghost(self.root_ghost, mouse_x, mouse_y):
             if tile.has_root and not self.root_ghost.starting_root.is_child(tile.root):
                 return False
-        
+
         return True
 
     def mousemove_game(self, data: dict[str, int]):
@@ -247,6 +251,14 @@ class Game:
         max_y = self.current_height // co.TILE + co.TILES_Y
         for _ in range(len(self.terrain), max_y + 1):
             self.terrain.append(next(self.terrain_generator))
+
+
+    def screen_shake(self, amount):
+        for _ in range(co.SCREENSHAKE_COUNT):
+            x, y = random.random() * 2 * amount - amount, random.random() * 2 * amount - amount
+            yield (x, y)
+        while True:
+            yield (0, 0)
 
 
     def draw_terrain(self):
@@ -342,7 +354,7 @@ class Game:
         if self.decay_cooldown == 0:
             if len(self.roots) <= 1:
                 self.game_over()
-            self.delete_root(self.roots[-1])
+            self.delete_root(self.roots[-1], True)
             self.decay_cooldown = -1
 
 

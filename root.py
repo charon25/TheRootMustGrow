@@ -94,7 +94,7 @@ class Root:
             if (int(x // co.TILE), int(y // co.TILE)) == (x_tile, y_tile):
                 return True
         return False
-    
+
     def is_child(self, parent_root: 'Root'):
         root = self
         if root is parent_root:
@@ -113,7 +113,7 @@ class Root:
         if self.width >= co.MAX_ROOT_WIDTH:
             self.width = co.MAX_ROOT_WIDTH
         self._update_texture()
-        
+
         if self.parent is not None:
             self.parent.increase_width(distance + 1)
 
@@ -165,7 +165,7 @@ class RootGhost:
     def update_texture(self):
         if not self.enabled:
             return
-        
+
         self.texture, self.x, self.y = update_texture(self.start_x, self.start_y, self.end_x, self.end_y, self.correct, 1)
 
         self.texture_ready = True
