@@ -1,3 +1,4 @@
+from math import atan2, cos, dist, sin
 import pygame as pyg
 from pygame import Surface
 import pyghelper
@@ -64,16 +65,16 @@ class Game:
         elif data['button'] == co.RIGHT_CLICK:
             self.root_ghost.disable()
 
-    def create_root_from_ghost(self, mouse_x: int, mouse_y: int) -> bool:
-        crossing_tiles = compute_crossing_tiles(
+    def get_crossing_tile_root_ghost(self, mouse_x: int, mouse_y: int) -> list[tuple[int, int]]:
+        return compute_crossing_tiles(
             int(self.root_ghost.start_x // co.TILE),
             int(self.root_ghost.start_y // co.TILE),
             mouse_x // co.TILE,
             mouse_y // co.TILE
         )
-        for x_cross, y_cross in crossing_tiles:
-            if self.terrain[y_cross][x_cross].has_root:
-                return False
+
+    def create_root_from_ghost(self, mouse_x: int, mouse_y: int) -> bool:
+        crossing_tiles = self.get_crossing_tile_root_ghost(mouse_x, mouse_y)
 
         for x_cross, y_cross in crossing_tiles:
             self.terrain[y_cross][x_cross].type = TileType.ROOT # TODO temporary line
@@ -81,14 +82,11 @@ class Game:
 
         new_root = Root(self.root_ghost.x, self.root_ghost.y, self.root_ghost.texture, crossing_tiles)
         self.roots.append(new_root)
-        print('====')
         return True
 
     def mouseup_game(self, data: dict[str, int]):
         if data['button'] != co.LEFT_CLICK:
             return
-
-        print(self.is_dragging)
 
         self.is_clicking = False
 
@@ -99,8 +97,8 @@ class Game:
             if not self.terrain[tile_y][tile_x].has_root:
                 self.root_ghost.enable(x, y + self.current_height_floored)
         else:
-            if not self.is_dragging:
-                self.root_ghost.update_texture(x, y + self.current_height_floored)
+            if not self.is_dragging and self.root_ghost.correct:
+                self.root_ghost.set_endpoint(x, y + self.current_height_floored)
                 if self.create_root_from_ghost(data['pos'][0], data['pos'][1] + self.current_height_floored):
                     self.root_ghost.disable()
 
@@ -116,13 +114,28 @@ class Game:
         self.current_height_floored = floor_n(self.current_height, co.TILE)
 
         x, y = pyg.mouse.get_pos()
-        self.root_ghost.update_texture(x, y + self.current_height)
+        self.root_ghost.set_endpoint(x, y + self.current_height)
 
     def mousemove_game(self, data: dict[str, int]):
         if self.is_dragging:
             self.scroll_screen(data['rel'][1])
         else:
-            self.root_ghost.update_texture(data['pos'][0], data['pos'][1] + self.current_height)
+            mouse_x, mouse_y = data['pos'][0], data['pos'][1] + self.current_height
+            length = self.root_ghost.set_length(mouse_x, mouse_y)
+            # print(self.current_height, self.root_ghost.start_x, self.root_ghost.start_y, mouse_x, mouse_y, length)
+            if length < co.MAX_ROOT_LENGTH:
+                self.root_ghost.set_endpoint(mouse_x, mouse_y)
+                self.root_ghost.correct = True
+                for tile_x, tile_y in self.get_crossing_tile_root_ghost(mouse_x, mouse_y):
+                    if self.terrain[tile_y][tile_x].has_root:
+                        self.root_ghost.correct = False
+                        break
+            else:
+                angle = -atan2(mouse_y - self.root_ghost.start_y, mouse_x - self.root_ghost.start_x)
+                end_x = int(self.root_ghost.start_x + cos(angle) * co.MAX_ROOT_LENGTH)
+                end_y = int(self.root_ghost.start_y - sin(angle) * co.MAX_ROOT_LENGTH)
+                self.root_ghost.set_endpoint(end_x, end_y)
+                self.root_ghost.correct = False
 
     def mousewheel_game(self, data: dict[str, int]):
         self.scroll_screen(data['y'] * co.TILE)
