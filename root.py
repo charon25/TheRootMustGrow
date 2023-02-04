@@ -32,6 +32,9 @@ class Root:
         self.texture_height = self.texture.get_height()
         self.width: int = 1
         self.crossing_tiles: list[tuple[int, int]] = list()
+        self.parent: 'Root' = root_ghost.starting_root
+        self.length = root_ghost.get_length(self.end_x, self.end_y)
+        self.is_dead = False
 
     def in_boundary(self, x: int, y:int) -> bool:
         sx, ex = min(self.start_x, self.end_x), max(self.start_x, self.end_x)
@@ -39,12 +42,16 @@ class Root:
         start_x, end_x = floor_n(sx, co.TILE), floor_n(ex, co.TILE) + co.TILE
         start_y, end_y = floor_n(self.start_y, co.TILE), floor_n(self.end_y, co.TILE) + co.TILE
 
+        print(start_x, x, end_x)
+        print(start_y, y, end_y)
+
         if not (start_x <= x <= end_x) or not (start_y <= y <= end_y):
             return False
         return True
 
     def contains_point(self, x: int, y: int) -> bool:
         if not self.in_boundary(x, y):
+            print('no boundary')
             return False
 
         start_x, start_y = (0.5 + self.start_x // co.TILE) * co.TILE, (0.5 + self.start_y // co.TILE) * co.TILE
@@ -65,6 +72,16 @@ class Root:
                 return True
         return False
     
+    def is_child(self, parent_root: 'Root'):
+        root = self
+        if root is parent_root:
+            return True
+        while root.parent is not None:
+            root = root.parent
+            if root is parent_root:
+                return True
+        return False
+
 
     def _update_texture(self):
         pass
@@ -105,9 +122,8 @@ class RootGhost:
         self.correct = False
         self.starting_root = None
 
-    def set_length(self, mouse_x: int, mouse_y: int):
-        self.length = ((self.start_x - mouse_x) ** 2 + (self.start_y - mouse_y) ** 2) ** 0.5
-        return self.length
+    def get_length(self, mouse_x: int, mouse_y: int):
+        return ((self.start_x - mouse_x) ** 2 + (self.start_y - mouse_y) ** 2) ** 0.5
 
     def set_endpoint(self, mouse_x: int, mouse_y: int):
         self.end_x = mouse_x

@@ -13,7 +13,7 @@ from game import Game
 pygame.init()
 
 game = Game(screen)
-game.start()
+game.start_game()
 
 while not game.has_ended:
     game.loop()
