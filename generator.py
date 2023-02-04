@@ -13,7 +13,7 @@ class TerrainGenerator:
 
     def starting_terrain(self) -> list[list[Tile]]:
         self.depth = co.TILES_Y
-        return [[Tile(TileType(randint(0, 1))) for x in range(co.TILES_X)] for y in range(co.TILES_Y)]
+        return [[Tile(TileType(randint(0, 1))) for x in range(co.TILES_X)] for y in range(co.TILES_Y + 1)]
 
     def __next__(self) -> list[Tile]:
         self.depth += 1

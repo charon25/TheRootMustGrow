@@ -9,6 +9,10 @@ from tile import Tile, TileType
 import textures as tx
 
 
+def floor_n(x: int, n: int) -> int:
+    return (x // n) * n
+
+
 class Game:
     def __init__(self, screen: Surface) -> None:
         # Screen
@@ -26,6 +30,7 @@ class Game:
         self.events.set_mousebuttonup_callback(self.mouseup_game)
         self.events.set_mousemotion_callback(self.mousemove_game)
         self.events.set_mousewheel_callback(self.mousewheel_game)
+
         def does_drag(data):self.is_dragging = self.is_clicking
         self.events.add_custom_event('drag_timer', does_drag)
 
@@ -34,6 +39,7 @@ class Game:
         self.terrain: list[list[Tile]] = list()
         ## Drag
         self.current_height: int = 0
+        self.current_height_floored: int = 0
         self.is_clicking: bool = False
         self.is_dragging: bool = False
         self.drag_start_y: int = 0
@@ -52,7 +58,7 @@ class Game:
 
     def mousedown_game(self, data: dict[str, int]):
         if data['button'] == co.LEFT_CLICK:
-            pyg.time.set_timer(pyg.event.Event(pyg.USEREVENT, {'name': 'drag_timer'}), 55, loops=0)
+            pyg.time.set_timer(pyg.event.Event(pyg.USEREVENT, {'name': 'drag_timer'}), 100, loops=1)
             self.is_clicking = True
             self.drag_start_y = data['pos'][1]
         elif data['button'] == co.RIGHT_CLICK:
@@ -75,27 +81,30 @@ class Game:
 
         new_root = Root(self.root_ghost.x, self.root_ghost.y, self.root_ghost.texture, crossing_tiles)
         self.roots.append(new_root)
+        print('====')
         return True
 
     def mouseup_game(self, data: dict[str, int]):
         if data['button'] != co.LEFT_CLICK:
             return
 
-        self.is_clicking = False
-        self.is_dragging = False
+        print(self.is_dragging)
 
-        # TODO : check si on commencer la racine ici
-        x = (0.5 + data['pos'][0] // co.TILE) * co.TILE
-        y = (0.5 + data['pos'][1] // co.TILE) * co.TILE
+        self.is_clicking = False
+
+        x = co.TILE / 2 + floor_n(data['pos'][0], co.TILE)
+        y = co.TILE / 2 + floor_n(data['pos'][1], co.TILE)
         if not self.root_ghost.enabled:
-            tile_x, tile_y = data['pos'][0] // co.TILE, (data['pos'][1] + self.current_height) // co.TILE
+            tile_x, tile_y = data['pos'][0] // co.TILE, (data['pos'][1] + self.current_height_floored) // co.TILE
             if not self.terrain[tile_y][tile_x].has_root:
-                self.root_ghost.enable(x, y + self.current_height)
+                self.root_ghost.enable(x, y + self.current_height_floored)
         else:
-            # TODO : check si on peut finir la racine ici
-            self.root_ghost.update_texture(x, y + self.current_height)
-            if self.create_root_from_ghost(data['pos'][0], data['pos'][1] + self.current_height):
-                self.root_ghost.disable()
+            if not self.is_dragging:
+                self.root_ghost.update_texture(x, y + self.current_height_floored)
+                if self.create_root_from_ghost(data['pos'][0], data['pos'][1] + self.current_height_floored):
+                    self.root_ghost.disable()
+
+        self.is_dragging = False
 
     def scroll_screen(self, quantity: int):
         self.current_height -= quantity
@@ -103,6 +112,8 @@ class Game:
             self.current_height = 0
         elif self.current_height + co.HEIGHT > self.max_visible_tiles * co.TILE:
             self.current_height = self.max_visible_tiles * co.TILE - co.HEIGHT
+
+        self.current_height_floored = floor_n(self.current_height, co.TILE)
 
         x, y = pyg.mouse.get_pos()
         self.root_ghost.update_texture(x, y + self.current_height)
@@ -118,7 +129,7 @@ class Game:
 
     def generate_missing(self):
         max_y = self.current_height // co.TILE + co.TILES_Y
-        for _ in range(len(self.terrain), max_y):
+        for _ in range(len(self.terrain), max_y + 1):
             self.terrain.append(next(self.terrain_generator))
 
 
@@ -128,6 +139,11 @@ class Game:
 
         # Terrain
         start_y = self.current_height // co.TILE
+        # range_len = co.TILES_Y + 1
+        # if start_y > 0:
+        #     start_y -= 1
+        #     range_len += 1
+
         for y in range(co.TILES_Y):
             row = self.terrain[y + start_y]
             for x, tile in enumerate(row):
@@ -135,14 +151,15 @@ class Game:
 
         # Roots
         for root in self.roots:
-            if root.is_visible(self.current_height):
-                game_surface.blit(root.texture, (root.x, root.y - self.current_height))
+            if root.is_visible(self.current_height_floored):
+                game_surface.blit(root.texture, (root.x, root.y - self.current_height_floored))
 
         # RootGhost
         if self.root_ghost.texture_ready:
-            game_surface.blit(self.root_ghost.texture, (self.root_ghost.x, self.root_ghost.y - self.current_height))
+            game_surface.blit(self.root_ghost.texture, (self.root_ghost.x, self.root_ghost.y - self.current_height_floored))
 
-
+        # x_offset, y_offset = next(self.offset)
+        # y_offset += (self.current_height % co.TILE)
         self.screen.blit(game_surface, next(self.offset))
 
 

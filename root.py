@@ -30,7 +30,8 @@ class Root:
         self._update_texture()
 
     def is_visible(self, current_height: int):
-        return current_height + co.HEIGHT >= self.y + self.texture_height - current_height >= 0
+        bottom = self.y + self.texture_height - current_height
+        return current_height + co.HEIGHT >= bottom or bottom >= 0
 
 
 class RootGhost:
