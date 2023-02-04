@@ -51,7 +51,7 @@ class Game:
         self.is_dragging: bool = False
         self.drag_start_y: int = 0
         self.max_height: int = 0
-        self.max_visible_tiles = co.TILES_Y + co.STARTING_SCROLL_OFFSET
+        self.max_visible_tiles = co.TILES_Y + 200#co.STARTING_SCROLL_OFFSET
 
         # Ressources
         self.resources: dict[co.ResourceType, int] = {resource: 100 for resource in list(co.ResourceType)} # TODO bonnes valeurs
@@ -243,11 +243,9 @@ class Game:
             tile = self.terrain[tile_y][tile_x]
             if tile.has_root and not self.root_ghost.starting_root.is_child(tile.root):
                 return False
-        # print('===')
-        # print(self.terrain[6][5])
+
         for tile_x, tile_y in self.get_exact_crossing_tile_root_ghost(self.root_ghost, mouse_x, mouse_y):
             tile = self.terrain[tile_y][tile_x]
-            # print(tile_x, tile_y, tile.type)
             if tile.type == TileType.ROCK:
                 return False
 
@@ -321,7 +319,7 @@ class Game:
         for tile in resource_tiles:
             quantity_text_surface_white = font.render(str(ceil(tile.resource)), False, (255, 255, 255))
             quantity_text_surface_black = font.render(str(ceil(tile.resource)), False, (0, 0, 0))
-            x = tile.x * co.TILE + co.TILE / 2 - quantity_text_surface_black.get_width() / 2
+            x = tile.x * co.TILE + co.TILE / 2 - quantity_text_surface_black.get_width() / 2 + 1
             y = tile.y * co.TILE - 2 - self.current_height_floored
             game_surface.blit(quantity_text_surface_black, (x + 1, y + 1))
             game_surface.blit(quantity_text_surface_black, (x + 1, y - 1))
