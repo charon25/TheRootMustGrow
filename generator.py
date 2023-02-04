@@ -97,7 +97,7 @@ class TerrainGenerator:
 
         return row
 
-    def _generate_first_level_layer(self):
+    def _generate_levels_layer(self, level: int):
         if self.depth in self.pattern_depths:
             for index, depth in enumerate(self.pattern_depths):
                 if depth == self.depth:
@@ -122,18 +122,42 @@ class TerrainGenerator:
             resource_type = next(self.terrain_resources)
             row[resource_x] = Tile(resource_type, resource_x, self.depth)
             row[resource_x].resource = next(self.resources_quantities)
-            self.current_resource_probability = co.LEVEL_1_BASE_RESOURCE_PROBABILITY
+            self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[level]
         else:
-            self.current_resource_probability += co.LEVEL_1_RESOURCE_PROBABILITY_INCREASE
+            self.current_resource_probability += co.LEVELS_RESOURCE_PROBABILITY_INCREASE[level]
 
         return row[:co.TILES_X]
 
+    def _setup_level_1(self):
+        self.terrain_resources = self._equitable_resource(2)
+        self.resources_quantities = self._resources_quantities(*co.LEVEL_1_RESOURCES_QUANTITY)
+
+        self.in_pattern = []
+        self.pattern_x = [randint(0, co.TILES_X) - 2 for index in range(co.LEVEL_1_PATTERN_COUNT)]
+        self.pattern_depths = [randint(self.depth, co.LEVEL_1_DEPTH) for _ in range(co.LEVEL_1_PATTERN_COUNT)]
+        self.patterns = [pat.get_pattern(pat.LEVEL_1, self.pattern_x[index], self.pattern_depths[index]) for index in range(co.LEVEL_1_PATTERN_COUNT)]
+        self.patterns_offset = [0] * co.LEVEL_1_PATTERN_COUNT
+
+        self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[1]
+
+    def _setup_level_2(self):
+        self.terrain_resources = self._equitable_resource(2)
+        self.resources_quantities = self._resources_quantities(*co.LEVEL_2_RESOURCES_QUANTITY)
+
+        self.in_pattern = []
+        self.pattern_x = [randint(0, co.TILES_X) - 2 for index in range(co.LEVEL_2_PATTERN_COUNT)]
+        self.pattern_depths = [randint(self.depth, co.LEVEL_2_DEPTH) for _ in range(co.LEVEL_2_PATTERN_COUNT)]
+        self.patterns = [pat.get_pattern(pat.LEVEL_2, self.pattern_x[index], self.pattern_depths[index]) for index in range(co.LEVEL_2_PATTERN_COUNT)]
+        self.patterns_offset = [0] * co.LEVEL_2_PATTERN_COUNT
+
+        self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[2]
 
 
     def __next__(self) -> list[Tile]:
         self.depth += 1
-        self.terrain_resources = self._equitable_resource(1)
-        self.resources_quantities = self._resources_quantities(*co.FIRST_RESOURCE_LAYER_QUANTITY)
+        if self.depth == 0:
+            self.terrain_resources = self._equitable_resource(1)
+            self.resources_quantities = self._resources_quantities(*co.FIRST_RESOURCE_LAYER_QUANTITY)
 
         if self.depth <= 4:
             return [Tile(TileType.BASE, x, self.depth) for x in range(co.TILES_X)]
@@ -144,23 +168,17 @@ class TerrainGenerator:
         if self.depth <= co.TILES_Y + 2:
             return self._generate_second_resource_layer()
 
-        self.terrain_resources = self._equitable_resource(2)
-        self.resources_quantities = self._resources_quantities(*co.FIRST_RESOURCE_LAYER_QUANTITY)
-
         if self.depth == co.TILES_Y + 2 + 1:
-            self.in_pattern = []
-            self.pattern_x = [randint(0, co.TILES_X) - 2 for index in range(co.LEVEL_1_PATTERN_COUNT)]
-            self.pattern_depths = [randint(self.depth, co.LEVEL_1_DEPTH) for _ in range(co.LEVEL_1_PATTERN_COUNT)]
-            self.patterns = [pat.get_level_1_pattern(self.pattern_x[index], self.pattern_depths[index]) for index in range(co.LEVEL_1_PATTERN_COUNT)]
-            self.patterns_offset = [0] * co.LEVEL_1_PATTERN_COUNT
-
-            self.current_resource_probability = co.LEVEL_1_BASE_RESOURCE_PROBABILITY
+            self._setup_level_1()
 
         if self.depth <= co.LEVEL_1_DEPTH:
-            return self._generate_first_level_layer()
+            return self._generate_levels_layer(1)
 
+        if self.depth == co.LEVEL_1_DEPTH + 1:
+            self._setup_level_2()
 
-
+        if self.depth <= co.LEVEL_2_DEPTH:
+            return self._generate_levels_layer(2)
 
         return [self.generate_tile(x, self.depth) for x in range(co.TILES_X)]
 
