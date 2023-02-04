@@ -285,6 +285,21 @@ class Game:
             yield (0, 0)
 
 
+    def blit_overlined_text(self, game_surface: Surface, text: str, font: pyg.font.Font, x: float, y: float, center_x: bool = False):
+        black_text_surface = font.render(text, False, (0, 0, 0))
+        white_text_surface = font.render(text, False, (255, 255, 255))
+
+        if center_x:
+            x -= white_text_surface.get_width() / 2
+
+        game_surface.blit(white_text_surface, (x + 1, y + 1))
+        game_surface.blit(white_text_surface, (x + 1, y - 1))
+        game_surface.blit(white_text_surface, (x - 1, y + 1))
+        game_surface.blit(white_text_surface, (x - 1, y - 1))
+
+        game_surface.blit(black_text_surface, (x, y))
+
+
     def draw_terrain(self):
         game_surface = pyg.Surface((co.WIDTH, co.HEIGHT), pyg.SRCALPHA)
         pyg.draw.rect(game_surface, (0, 0, 0), pyg.Rect(0, 0, co.WIDTH, co.HEIGHT))
@@ -317,16 +332,9 @@ class Game:
         # Resources
         font = utils.get_font(15)
         for tile in resource_tiles:
-            quantity_text_surface_white = font.render(str(ceil(tile.resource)), False, (255, 255, 255))
-            quantity_text_surface_black = font.render(str(ceil(tile.resource)), False, (0, 0, 0))
-            x = tile.x * co.TILE + co.TILE / 2 - quantity_text_surface_black.get_width() / 2 + 1
+            x = tile.x * co.TILE + co.TILE / 2 + 1
             y = tile.y * co.TILE - 2 - self.current_height_floored
-            game_surface.blit(quantity_text_surface_black, (x + 1, y + 1))
-            game_surface.blit(quantity_text_surface_black, (x + 1, y - 1))
-            game_surface.blit(quantity_text_surface_black, (x - 1, y + 1))
-            game_surface.blit(quantity_text_surface_black, (x - 1, y - 1))
-
-            game_surface.blit(quantity_text_surface_white, (x, y))
+            self.blit_overlined_text(game_surface, str(ceil(tile.resource)), font, x, y, center_x = True)
 
         # RootGhost
         if self.root_ghost.texture_ready:
@@ -346,6 +354,8 @@ class Game:
 
         fps_text_surface = font.render(f'{self.fps:.0f} FPS', False, (0, 0, 0))
         game_surface.blit(fps_text_surface, (co.FPS_COORDS[0], co.FPS_COORDS[1] + co.UI_TOP))
+
+        self.blit_overlined_text(game_surface, f'Depth : {self.current_height_floored // co.TILE:.0f} - {self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT:.0f}', utils.get_font(30), *co.DEPTH_COORDS)
 
         self.screen.blit(game_surface, next(self.offset))
 
