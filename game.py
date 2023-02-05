@@ -115,7 +115,7 @@ class Game:
             self.production_bonus += tile.bonus_value
 
         if bonus_type == co.BonusType.CONSUMPTION:
-            self.consumption_rate += tile.bonus_value
+            self.consumption_bonus += tile.bonus_value
 
     def create_root_from_ghost(self, root_ghost: RootGhost, mouse_x: int, mouse_y: int, auto: bool = False) -> bool:
         crossing_tiles = self.get_crossing_tile_root_ghost(root_ghost, mouse_x, mouse_y)
@@ -136,9 +136,9 @@ class Game:
                 new_root.resource_tile = tile
             elif tile.is_bonus_tile():
                 self.apply_bonus(tile)
+                self.particles.extend(Particle.generate_bonus_particles(tile.x * co.TILE + co.TILE / 2, tile.y * co.TILE + co.TILE / 2, tile.type))
                 tile.type = TileType.BASE
                 self.offset = self.screen_shake(co.BONUS_SCREENSHAKE)
-                # TODO : particules
 
             if mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET > self.max_visible_tiles:
                 self.max_visible_tiles = mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET
@@ -390,8 +390,11 @@ class Game:
             x, y = co.RESOURCE_TEXT_COORDS[resource]
             game_surface.blit(resource_text_surface, (x, y + co.UI_TOP + co.TILE / 2 - resource_text_surface.get_height() / 2))
 
+
+
         total_resources_text_surface = font.render(f'Total roots : {self.total_roots / co.TILE:.0f}', False, (0, 0, 0))
         game_surface.blit(total_resources_text_surface, (co.TOTAL_ROOTS_TEXT_COORD[0], co.TOTAL_ROOTS_TEXT_COORD[1] + co.UI_TOP))
+
 
         fps_text_surface = font.render(f'{self.fps:.0f} FPS', False, (0, 0, 0))
         game_surface.blit(fps_text_surface, (co.FPS_COORDS[0], co.FPS_COORDS[1] + co.UI_TOP))
@@ -400,6 +403,18 @@ class Game:
 
         game_surface.blits([(particle.texture, (particle.x, particle.y)) for particle in self.particles if particle.is_fixed])
 
+        font = utils.get_font(30)
+        bonus_text_surface = font.render(f'Bonuses :', False, (0, 0, 0))
+        game_surface.blit(bonus_text_surface, (co.BONUS_TEXT_COORD[0], co.BONUS_TEXT_COORD[1] + co.UI_TOP))
+
+        font = utils.get_font(25)
+        production_bonus_text_surface = font.render(f'Production    +{self.production_bonus * 100:.1f} %', False, (0, 0, 0))
+        game_surface.blit(production_bonus_text_surface, (co.PRODUCTION_BONUS_TEXT_COORD[0], co.PRODUCTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
+        consumption_bonus_text_surface = font.render(f'Consumption   {"-" if self.consumption_bonus == 0 else ""}{self.consumption_bonus * 100:.1f} %', False, (0, 0, 0))
+        game_surface.blit(consumption_bonus_text_surface, (co.CONSUMPTION_BONUS_TEXT_COORD[0], co.CONSUMPTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
+
+
+        # Fin
         self.screen.blit(game_surface, next(self.offset))
 
 
@@ -408,7 +423,7 @@ class Game:
         for tile in self.resources_tiles:
             if tile.resource >= 0:
                 resource = co.ResourceType(tile.type.value)
-                self.particles.extend(Particle.generate_extract_particle(tile.x * co.TILE + co.TILE / 2, tile.y * co.TILE + co.TILE / 2, resource))
+                self.particles.extend(Particle.generate_extract_particle(tile.x * co.TILE + co.TILE / 2, tile.y * co.TILE + co.TILE / 2, tile.type))
                 consumed = tile.consume(self.absorption_rate[resource] * (1 + self.production_bonus))
                 self.resources[resource] += consumed
                 self.total_gained[resource] += consumed
@@ -424,7 +439,7 @@ class Game:
 
             show_particle = random.random() < utils.clamped_lerp(self.total_gained[resource], 0, co.GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY_AMOUNT, co.GAINED_RESOURCE_PARTICLE_MIN_PROBABILITY, co.GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY)
             if self.total_gained[resource] > 0 and show_particle:
-                self.particles.extend(Particle.generate_extract_particle(*co.UI_RESOURCE_TEXTURE_COORDS[resource], resource, fixed=True))
+                self.particles.extend(Particle.generate_extract_particle(*co.UI_RESOURCE_TEXTURE_COORDS[resource], TileType(resource.value), fixed=True))
 
         if all(quantity > 0 for _, quantity in self.resources.items()):
             self.decay_cooldown = -1

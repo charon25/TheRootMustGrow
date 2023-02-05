@@ -48,3 +48,6 @@ NITROGEN_PARTICLES = [pyghelper.Image.create(f'resources/textures/particles/nitr
 
 PHOSPHORUS_PARTICLES_COUNT = 3
 PHOSPHORUS_PARTICLES = [pyghelper.Image.create(f'resources/textures/particles/phosphorus_{i}.png') for i in range(1, PHOSPHORUS_PARTICLES_COUNT + 1)]
+
+BONUS_PARTICLES_COUNT = 3
+BONUS_PARTICLES = [pyghelper.Image.create(f'resources/textures/particles/bonus_{i}.png') for i in range(1, BONUS_PARTICLES_COUNT + 1)]
