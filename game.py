@@ -70,8 +70,8 @@ class Game:
         self.sounds.add_sound(co.SOUND_LOSE_PATH, co.SOUND_LOSE, volume=0.75)
         self.sounds.add_sound(co.SOUND_WARNING_PATH, co.SOUND_WARNING, volume=0.3)
 
-        # self.sounds.add_music(co.MUSIC_PATH, co.MUSIC)
-        # self.sounds.play_music(co.MUSIC, loop=True, volume=0.05)
+        self.sounds.add_music(co.MUSIC_PATH, co.MUSIC)
+        self.sounds.play_music(co.MUSIC, loop=True, volume=0.05)
 
     def start_game(self, tutorial: bool) -> None:
         # Terrain

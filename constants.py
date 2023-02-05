@@ -278,7 +278,7 @@ TUTORIAL_TEXT_Y_START = 20
 # Sons
 
 MUSIC = 'music'
-MUSIC_PATH= ''
+MUSIC_PATH= 'resources/audio/music.mp3'
 
 SOUND_CLICK = 'click'
 SOUND_CLICK_PATH = 'resources/audio/sounds/simple_click.wav'
