@@ -51,7 +51,7 @@ class Game:
         self.is_dragging: bool = False
         self.drag_start_y: int = 0
         self.max_height: int = 0
-        self.max_visible_tiles = co.TILES_Y + 200#co.STARTING_SCROLL_OFFSET
+        self.max_visible_tiles = co.TILES_Y + 10000#co.STARTING_SCROLL_OFFSET
 
         # Ressources
         self.resources: dict[co.ResourceType, int] = {resource: 100 for resource in list(co.ResourceType)} # TODO bonnes valeurs

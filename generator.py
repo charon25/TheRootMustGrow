@@ -174,6 +174,19 @@ class TerrainGenerator:
         self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[3]
 
 
+    def _setup_level_4(self):
+        self.terrain_resources = self._equitable_resource(2)
+        self.resources_quantities = self._resources_quantities(*co.LEVEL_4_RESOURCES_QUANTITY)
+
+        self.in_pattern = []
+        self.pattern_x = [randint(0, co.TILES_X) - 2 for index in range(co.LEVEL_4_PATTERN_COUNT)]
+        self.pattern_depths = generate_random_depths(co.LEVEL_4_PATTERN_COUNT, self.depth, co.LEVEL_4_HEIGHT)
+        self.patterns = [pat.get_pattern(pat.LEVEL_4, self.pattern_x[index], self.pattern_depths[index]) for index in range(co.LEVEL_4_PATTERN_COUNT)]
+        self.patterns_offset = [0] * co.LEVEL_4_PATTERN_COUNT
+
+        self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[4]
+
+
     def __next__(self) -> list[Tile]:
         self.depth += 1
         if self.depth == 0:
@@ -207,6 +220,12 @@ class TerrainGenerator:
         if self.depth <= co.LEVEL_3_DEPTH:
             return self._generate_levels_layer(3)
 
+        if self.depth == co.LEVEL_3_DEPTH + 1:
+            self._setup_level_4()
+
+        if self.depth <= co.LEVEL_4_DEPTH:
+            return self._generate_levels_layer(4)
+
         return [Tile(TileType.BASE, x, self.depth) for x in range(co.TILES_X)]
 
     def starting_terrain(self) -> list[list[Tile]]:
@@ -229,3 +248,6 @@ class TerrainGenerator:
 
         if depth <= co.LEVEL_3_DEPTH:
             return 3
+
+        if depth <= co.LEVEL_4_DEPTH:
+            return 4
