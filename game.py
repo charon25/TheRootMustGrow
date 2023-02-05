@@ -334,7 +334,16 @@ class Game:
         for tile in resource_tiles:
             x = tile.x * co.TILE + co.TILE / 2 + 1
             y = tile.y * co.TILE - 2 - self.current_height_floored
-            self.blit_overlined_text(game_surface, str(ceil(tile.resource)), font, x, y, center_x = True)
+            if 1_000 > tile.resource >= 0:
+                resource_str = str(ceil(tile.resource))
+            elif 1_000_000 > tile.resource >= 1_000:
+                resource_str = utils.get_resource_string(tile.resource, 1_000, 'K')
+            elif 1_000_000_000 > tile.resource >= 1_000_000:
+                resource_str = utils.get_resource_string(tile.resource, 1_000_000, 'M')
+            elif tile.resource >= 1_000_000_000:
+                resource_str = utils.get_resource_string(tile.resource, 1_000_000_000, 'B')
+
+            self.blit_overlined_text(game_surface, resource_str, font, x, y, center_x = True)
 
         # RootGhost
         if self.root_ghost.texture_ready:
@@ -355,7 +364,7 @@ class Game:
         fps_text_surface = font.render(f'{self.fps:.0f} FPS', False, (0, 0, 0))
         game_surface.blit(fps_text_surface, (co.FPS_COORDS[0], co.FPS_COORDS[1] + co.UI_TOP))
 
-        self.blit_overlined_text(game_surface, f'Depth : {self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT:.0f} / {self.max_visible_tiles - co.UI_HEIGHT}', utils.get_font(30), *co.DEPTH_COORDS)
+        self.blit_overlined_text(game_surface, f'Depth : {self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT:.0f} / {self.max_visible_tiles - co.UI_HEIGHT} [{self.terrain_generator.get_level(self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT)}]', utils.get_font(30), *co.DEPTH_COORDS)
 
         self.screen.blit(game_surface, next(self.offset))
 
@@ -366,15 +375,21 @@ class Game:
             if tile.resource >= 0:
                 resource = co.ResourceType(tile.type.value)
                 self.particles.extend(Particle.generate_extract_particles(tile.x * co.TILE + co.TILE / 2, tile.y * co.TILE + co.TILE / 2, resource))
-                if tile.resource > self.absorption_rate[resource]:
-                    tile.resource -= self.absorption_rate[resource]
-                    self.resources[resource] += self.absorption_rate[resource]
-                    self.total_gained[resource] += self.absorption_rate[resource]
-                else:
-                    self.resources[resource] += tile.resource
-                    self.total_gained[resource] += tile.resource
-                    tile.resource = 0
+                consumed = tile.consume(self.absorption_rate[resource])
+                self.resources[resource] += consumed
+                self.total_gained[resource] += consumed
+
+                if tile.resource == 0:
                     tile.root.resource_tile = None
+                # if tile.resource > self.absorption_rate[resource]:
+                #     tile.resource -= self.absorption_rate[resource]
+                #     self.resources[resource] += self.absorption_rate[resource]
+                #     self.total_gained[resource] += self.absorption_rate[resource]
+                # else:
+                #     self.resources[resource] += tile.resource
+                #     self.total_gained[resource] += tile.resource
+                #     tile.resource = 0
+                #     tile.root.resource_tile = None
 
         self.total_roots = sum(root.length for root in self.roots)
         for resource in co.ResourceType:

@@ -55,11 +55,13 @@ RESOURCE_SPACES: dict[ResourceType, str] = {
     ResourceType.PHOSPHORUS: ''
 }
 
+# relative / frame
 STARTING_ABSORPTION_RATE: dict[ResourceType, float] = {
-    ResourceType.WATER: 1,
-    ResourceType.NITROGEN: 0.2,
-    ResourceType.PHOSPHORUS: 0.2
+    ResourceType.WATER: 1 / 50,
+    ResourceType.NITROGEN: 0.2 / 50,
+    ResourceType.PHOSPHORUS: 0.2 / 50
 }
+# / frame / racine
 STARTING_CONSUMPTION_RATE: dict[ResourceType, float] = {
     ResourceType.WATER: 0.00000001,
     ResourceType.NITROGEN: 0.000000001,
@@ -68,7 +70,7 @@ STARTING_CONSUMPTION_RATE: dict[ResourceType, float] = {
 
 
 # Police
-FONT_PATH = 'resources/font/monogramextended.ttf'
+FONT_PATH = 'resources/font/monogramextended.otf'
 RESOURCE_FONT_COLOR: dict[ResourceType, tuple[int, int, int]] = {
     ResourceType.WATER: (0, 0, 0),
     ResourceType.NITROGEN: (255, 255, 255),
@@ -103,33 +105,40 @@ EXTRACT_PARTICLE_RADIUS = TILE / 3
 EXTRACT_PARTICLE_SPEED = 0.5
 
 # Génération terrain
-FIRST_RESOURCE_LAYER_QUANTITY = (250, 350)
+FIRST_RESOURCE_LAYER_QUANTITY = (83, 83)
 
 LEVELS_BASE_RESOURCE_PROBABILITY: list[float] = [None, # parce que les level sont indexés à 1
     0.05,
-    0.05
+    0.05,
+    0.09
 ]
 
 LEVELS_RESOURCE_PROBABILITY_INCREASE: list[float] = [None, # parce que les level sont indexés à 1
     0.06,
-    0.035
+    0.035,
+    0.028
 ]
 
 LEVELS_ROCK_PROBABILITY: list[float] = [None, # parce que les level sont indexés à 1
     1 / 135,
-    1 / 110
+    1 / 110,
+    1 / 90
 ]
 
 ## LEVEL 1
 LEVEL_1_RESOURCES_QUANTITY = (300, 420)
-LEVEL_1_DEPTH = 80
+LEVEL_1_DEPTH = 65
 LEVEL_1_PATTERN_COUNT = 6
 LEVEL_1_HEIGHT = LEVEL_1_DEPTH - (TILES_Y + 2)
-LEVEL_1_ROCK_PROBABILITY = 1 / 60
 
 ## LEVEL 2
-LEVEL_2_RESOURCES_QUANTITY = (450, 650)
-LEVEL_2_DEPTH = 200
+LEVEL_2_RESOURCES_QUANTITY = (700, 950)
+LEVEL_2_DEPTH = 170
 LEVEL_2_PATTERN_COUNT = 9
 LEVEL_2_HEIGHT = LEVEL_2_DEPTH - LEVEL_1_DEPTH
-LEVEL_1_ROCK_PROBABILITY = 1 / 30
+
+## LEVEL 2
+LEVEL_3_RESOURCES_QUANTITY = (1000, 1300)
+LEVEL_3_DEPTH = 300
+LEVEL_3_PATTERN_COUNT = 15
+LEVEL_3_HEIGHT = LEVEL_3_DEPTH - LEVEL_2_DEPTH

@@ -40,3 +40,11 @@ def generate_pos_velocity_in_disk(disk_radius: float, x_center: float, y_center:
 
 def random_sym_float(amplitude: float):
     return 2 * random() * amplitude - amplitude
+
+def get_resource_string(quantity: float, divisor: int, letter: str) -> str:
+    q, r = quantity // divisor, quantity % divisor
+    r //= (divisor // 10)
+
+    if q > 1000:
+        return f'999{letter}'
+    return f'{q:.0f}{letter}{r:.0f}' if r > 0 else f'{q:.0f}{letter}'

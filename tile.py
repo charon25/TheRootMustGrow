@@ -38,6 +38,7 @@ class Tile:
         self.has_root = False
         self.root: Root = None
         self.resource: int = -1
+        self.starting_resource: int = -1
         self.x = x
         self.y = y
         self.texture: Surface = choice(tx.BASE_TILES)
@@ -60,3 +61,17 @@ class Tile:
 
     def __repr__(self) -> str:
         return f'{self.type.name} : {self.x} / {self.y}'
+
+    def set_starting_resource(self, starting_resource: int):
+        self.resource = starting_resource
+        self.starting_resource = starting_resource
+
+    def consume(self, rate: float):
+        quantity = rate * self.starting_resource
+        if quantity < self.resource:
+            self.resource -= quantity
+            return quantity
+        else:
+            value = self.resource
+            self.resource = 0
+            return value

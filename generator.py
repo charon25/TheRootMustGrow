@@ -26,15 +26,6 @@ class TerrainGenerator:
         self.current_resource_probability: float = 0
         self.last_resource_type: TileType = TileType.WATER
 
-    def generate_tile(self, x: int, y: int):
-        tile = Tile(TileType.BASE, x, y)
-
-        if tile.is_resource_tile():
-            tile.resource = 100 # TODO update
-
-        if tile.type == TileType.BASE:
-            tile.texture = choice(tx.BASE_TILES)
-        return tile
 
     def _equitable_resource(self, cycle: int = 1):
         while True:
@@ -53,11 +44,11 @@ class TerrainGenerator:
                 tile = Tile(TileType.ROCK, x + dx, y)
             elif c == 'x':
                 tile = Tile(next(self.terrain_resources), x + dx, y)
-                tile.resource = next(self.resources_quantities)
+                tile.set_starting_resource(next(self.resources_quantities))
                 self.last_resource_type = tile.type
             elif c == 's':
                 tile = Tile(self.last_resource_type, x + dx, y)
-                tile.resource = next(self.resources_quantities)
+                tile.set_starting_resource(next(self.resources_quantities))
             else:
                 tile = Tile(TileType.BASE, x + dx, y)
 
@@ -77,7 +68,7 @@ class TerrainGenerator:
         for x in range(co.TILES_X):
             if x == resource_x:
                 tile = Tile(resource_type, x, self.depth)
-                tile.resource = randint(*co.FIRST_RESOURCE_LAYER_QUANTITY)
+                tile.set_starting_resource(randint(*co.FIRST_RESOURCE_LAYER_QUANTITY))
                 row.append(tile)
             else:
                 row.append(Tile(TileType.BASE, x, self.depth))
@@ -99,7 +90,7 @@ class TerrainGenerator:
             if x == special_x:
                 tile = Tile(resource_type, x, self.depth)
                 if tile.is_resource_tile():
-                    tile.resource = randint(*co.FIRST_RESOURCE_LAYER_QUANTITY)
+                    tile.set_starting_resource(randint(*co.FIRST_RESOURCE_LAYER_QUANTITY))
                 row.append(tile)
             else:
                 row.append(Tile(TileType.BASE, x, self.depth))
@@ -137,7 +128,7 @@ class TerrainGenerator:
             resource_x = randrange(0, co.TILES_X)
             resource_type = next(self.terrain_resources)
             row[resource_x] = Tile(resource_type, resource_x, self.depth)
-            row[resource_x].resource = next(self.resources_quantities)
+            row[resource_x].set_starting_resource(next(self.resources_quantities))
             self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[level]
         else:
             self.current_resource_probability += co.LEVELS_RESOURCE_PROBABILITY_INCREASE[level]
@@ -170,6 +161,19 @@ class TerrainGenerator:
         self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[2]
 
 
+    def _setup_level_3(self):
+        self.terrain_resources = self._equitable_resource(2)
+        self.resources_quantities = self._resources_quantities(*co.LEVEL_3_RESOURCES_QUANTITY)
+
+        self.in_pattern = []
+        self.pattern_x = [randint(0, co.TILES_X) - 2 for index in range(co.LEVEL_3_PATTERN_COUNT)]
+        self.pattern_depths = generate_random_depths(co.LEVEL_3_PATTERN_COUNT, self.depth, co.LEVEL_3_HEIGHT)
+        self.patterns = [pat.get_pattern(pat.LEVEL_3, self.pattern_x[index], self.pattern_depths[index]) for index in range(co.LEVEL_3_PATTERN_COUNT)]
+        self.patterns_offset = [0] * co.LEVEL_3_PATTERN_COUNT
+
+        self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[3]
+
+
     def __next__(self) -> list[Tile]:
         self.depth += 1
         if self.depth == 0:
@@ -197,7 +201,13 @@ class TerrainGenerator:
         if self.depth <= co.LEVEL_2_DEPTH:
             return self._generate_levels_layer(2)
 
-        return [self.generate_tile(x, self.depth) for x in range(co.TILES_X)]
+        if self.depth == co.LEVEL_2_DEPTH + 1:
+            self._setup_level_3()
+
+        if self.depth <= co.LEVEL_3_DEPTH:
+            return self._generate_levels_layer(3)
+
+        return [Tile(TileType.BASE, x, self.depth) for x in range(co.TILES_X)]
 
     def starting_terrain(self) -> list[list[Tile]]:
         self.depth = -1
@@ -206,3 +216,16 @@ class TerrainGenerator:
             terrain.append(next(self))
 
         return terrain
+
+    def get_level(self, depth):
+        if depth <= co.TILES_Y + 2:
+            return 0
+
+        if depth <= co.LEVEL_1_DEPTH:
+            return 1
+
+        if depth <= co.LEVEL_2_DEPTH:
+            return 2
+
+        if depth <= co.LEVEL_3_DEPTH:
+            return 3
