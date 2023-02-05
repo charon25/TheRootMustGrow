@@ -339,7 +339,7 @@ class Game:
                     if has_resources or tile.type == TileType.ROCK or tile.is_bonus_tile():
                         game_surface.blit(tile.resource_textures, (x * co.TILE, y * co.TILE))
                 if (x, y) == self.selected_tile:
-                    game_surface.blit(tx.TILE_SELECTOR, (x * co.TILE, y * co.TILE))
+                    game_surface.blit(tx.TILE_SELECTOR, (x * co.TILE, y * co.TILE - self.current_height_floored))
 
         # Roots
         for root in self.roots:

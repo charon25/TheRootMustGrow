@@ -66,6 +66,7 @@ class Tile:
 
         elif self.type == TileType.CONSUMPTION:
             base = co.CONSUMPTION_BONUS_BASE + self.y * co.CONSUMPTION_BONUS_INC
+            print(base * (1 - co.PRODUCTION_BONUS_VARIANCE), base * (1 + co.PRODUCTION_BONUS_VARIANCE))
             self.bonus_value = utils.random_float(base * (1 - co.CONSUMPTION_BONUS_VARIANCE), base * (1 + co.CONSUMPTION_BONUS_VARIANCE))
 
 

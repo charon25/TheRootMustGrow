@@ -26,6 +26,9 @@ class TerrainGenerator:
         # Ressources
         self.current_resource_probability: float = 0
         self.last_resource_type: TileType = TileType.WATER
+        # Bonus
+        self.first_bonus_layer: int = -1
+        self.current_bonus_probability: float = 0
 
 
     def _equitable_resource(self, cycle: int = 1):
@@ -44,12 +47,20 @@ class TerrainGenerator:
             if c == 'r':
                 tile = Tile(TileType.ROCK, x + dx, y)
             elif c == 'x':
-                tile = Tile(next(self.terrain_resources), x + dx, y)
-                tile.set_starting_resource(next(self.resources_quantities), utils.random_float(co.RESOURCE_ABSORPTION_MODIFIER_MIN, utils.clamped_lerp(self.depth, 1, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX_DEPTH, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MIN, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX)))
-                self.last_resource_type = tile.type
+                if random() < co.RESOURCE_TO_BONUS_PROBABILITY:
+                    bonus_type = TileType(choice(list(co.BonusType)).value)
+                    tile = Tile(bonus_type, x + dx, self.depth)
+                else:
+                    tile = Tile(next(self.terrain_resources), x + dx, y)
+                    tile.set_starting_resource(next(self.resources_quantities), utils.random_float(co.RESOURCE_ABSORPTION_MODIFIER_MIN, utils.clamped_lerp(self.depth, 1, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX_DEPTH, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MIN, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX)))
+                    self.last_resource_type = tile.type
             elif c == 's':
-                tile = Tile(self.last_resource_type, x + dx, y)
-                tile.set_starting_resource(next(self.resources_quantities, utils.random_float(co.RESOURCE_ABSORPTION_MODIFIER_MIN, utils.clamped_lerp(self.depth, 1, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX_DEPTH, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MIN, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX))))
+                if random() < co.RESOURCE_TO_BONUS_PROBABILITY:
+                    bonus_type = TileType(choice(list(co.BonusType)).value)
+                    tile = Tile(bonus_type, x + dx, self.depth)
+                else:
+                    tile = Tile(self.last_resource_type, x + dx, y)
+                    tile.set_starting_resource(next(self.resources_quantities), utils.random_float(co.RESOURCE_ABSORPTION_MODIFIER_MIN, utils.clamped_lerp(self.depth, 1, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX_DEPTH, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MIN, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX)))
             else:
                 tile = Tile(TileType.BASE, x + dx, y)
 
@@ -73,8 +84,6 @@ class TerrainGenerator:
                 row.append(tile)
             else:
                 row.append(Tile(TileType.BASE, x, self.depth))
-        
-        row[15] = Tile(TileType(choice(list(co.BonusType)).value), 15, self.depth)
 
         return row
 
@@ -88,7 +97,7 @@ class TerrainGenerator:
         else:
             special_x = -1
 
-        row = []
+        row: list[Tile] = []
         for x in range(co.TILES_X):
             if x == special_x:
                 tile = Tile(resource_type, x, self.depth)
@@ -97,6 +106,11 @@ class TerrainGenerator:
                 row.append(tile)
             else:
                 row.append(Tile(TileType.BASE, x, self.depth))
+
+        if self.depth == self.first_bonus_layer:
+            bonus_x = randint(8, co.TILES_X - 8)
+            row[bonus_x] = Tile(choice((TileType.PRODUCTION, TileType.CONSUMPTION)), bonus_x, self.depth)
+            row[bonus_x].bonus_value *= 2
 
         return row
 
@@ -137,6 +151,14 @@ class TerrainGenerator:
             self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[level]
         else:
             self.current_resource_probability += co.LEVELS_RESOURCE_PROBABILITY_INCREASE[level]
+
+        if random() < self.current_bonus_probability:
+            bonus_x = randrange(1, co.TILES_X - 1)
+            bonus_type = TileType(choice(list(co.BonusType)).value)
+            row[bonus_x] = Tile(bonus_type, bonus_x, self.depth)
+            self.current_bonus_probability = co.BASE_BONUS_PROBABILITY
+        else:
+            self.current_bonus_probability += co.BONUS_PROBABILITY_INC
 
         return row[:co.TILES_X]
 
@@ -208,6 +230,9 @@ class TerrainGenerator:
 
         if self.depth <= 20:
             return self._generate_first_resource_layer()
+
+        if self.depth == 21:
+            self.first_bonus_layer = randint(21, 27)
 
         if self.depth <= co.TILES_Y + 2:
             return self._generate_second_resource_layer()
