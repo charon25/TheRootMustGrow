@@ -52,28 +52,30 @@ def generate_circular_pos_velocity_in_disk(disk_radius: float, x_center: float, 
 def random_sym_float(amplitude: float):
     return 2 * random() * amplitude - amplitude
 
-def get_resource_string(quantity: float, divisor: int, letter: str, after_comma: int = 1) -> str:
+def get_resource_string(quantity: float, divisor: int, letter: str, after_comma: int = 1, neg: bool = False) -> str:
     q, r = quantity // divisor, quantity % divisor
     r = round(r / (divisor // (10 ** after_comma)), 0)
 
     if q > 1000:
-        return f'999{letter}'
+        return f'{"-" if neg else ""}999{letter}'
     if q > 10 or r == 0:
-        return f'{q:.0f}{letter}'
-    return f'{q:.0f}{letter}{r:.0f}'
+        return f'{"-" if neg else ""}{q:.0f}{letter}'
+    return f'{"-" if neg else ""}{q:.0f}{letter}{r:.0f}'
 
-def int_to_small_string(value: int, after_comma: int = 1, apply_ceil: bool = False) -> str:
-    if 1_000 > value >= 0:
+def int_to_small_string(s_value: int, after_comma: int = 1, apply_ceil: bool = False) -> str:
+    value = abs(s_value)
+    sign = "-" if s_value < 0 else ""
+    if 1_000 > value:
         if apply_ceil:
-            return f'{ceil(value):.{after_comma - 1}f}'
+            return f'{sign}{ceil(value):.{after_comma - 1}f}'
         else:
-            return f'{value:.{after_comma - 1}f}'
+            return f'{sign}{value:.{after_comma - 1}f}'
     elif 1_000_000 > value >= 1_000:
-        return get_resource_string(value, 1_000, 'K', after_comma)
+        return get_resource_string(value, 1_000, 'K', after_comma, neg=s_value < 0)
     elif 1_000_000_000 > value >= 1_000_000:
-        return get_resource_string(value, 1_000_000, 'M', after_comma)
+        return get_resource_string(value, 1_000_000, 'M', after_comma, neg=s_value < 0)
     elif value >= 1_000_000_000:
-        return get_resource_string(value, 1_000_000_000, 'B', after_comma)
+        return get_resource_string(value, 1_000_000_000, 'B', after_comma, neg=s_value < 0)
 
 def random_float(min: float, max: float):
     return random() * (max - min) + min

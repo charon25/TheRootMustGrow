@@ -68,6 +68,12 @@ RESOURCE_SPACES: dict[ResourceType, str] = {
     ResourceType.PHOSPHORUS: ''
 }
 
+RESOURCES_START: dict[ResourceType, int] = {
+    ResourceType.WATER: 150,
+    ResourceType.NITROGEN: 200,
+    ResourceType.PHOSPHORUS: 250,
+}
+
 # relative / frame
 STARTING_ABSORPTION_RATE: dict[ResourceType, float] = {
     ResourceType.WATER: (1 / 20) / 60,
@@ -76,9 +82,9 @@ STARTING_ABSORPTION_RATE: dict[ResourceType, float] = {
 }
 # / frame / racine
 STARTING_CONSUMPTION_RATE: dict[ResourceType, float] = {
-    ResourceType.WATER: 0.00000001,
-    ResourceType.NITROGEN: 0.000000001,
-    ResourceType.PHOSPHORUS: 0.000000001
+    ResourceType.WATER: 250 / 60 / 30 / 300 / 4,
+    ResourceType.NITROGEN: 125 / 60 / 30 / 300 / 4,
+    ResourceType.PHOSPHORUS: 100 / 60 / 30 / 300 / 4
 }
 
 
@@ -261,7 +267,8 @@ TUTORIAL_TEXTS = [None,
     ],
     [
         "You can also find bonuses on the way.", "", "",
-        "They provide permanent upgrade for resource management."
+        "They provide permanent upgrade for resource management.", "", "",
+        "By the way, roots cannot cross each other."
     ]
 ]
 

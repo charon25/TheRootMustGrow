@@ -41,6 +41,12 @@ class Game:
         self.set_callbacks()
 
         self.tutorial_done: bool = False
+        try:
+            with open('tuto.txt', 'r') as fi:
+                pass
+            self.tutorial_done = True
+        except Exception:
+            pass
 
         def does_drag(data):self.is_dragging = self.is_clicking
         self.events.add_custom_event('drag_timer', does_drag)
@@ -54,7 +60,7 @@ class Game:
             self.state = co.GameState.GAME
             self.terrain_generator = TerrainGenerator()
             self.max_visible_tiles = co.TILES_Y + co.STARTING_SCROLL_OFFSET
-            self.resources: dict[co.ResourceType, int] = {resource: 250 for resource in list(co.ResourceType)}
+            self.resources: dict[co.ResourceType, int] = {resource: co.RESOURCES_START[resource] for resource in list(co.ResourceType)}
 
         else:
             self.state = co.GameState.TUTORIAL
@@ -447,6 +453,12 @@ class Game:
                 self.current_height = 0
                 self.current_height_floored = 0
                 self.tutorial_done = True
+                try:
+                    with open('tuto.txt', 'w') as fo:
+                        fo.write('done')
+                    self.tutorial_done = True
+                except Exception:
+                    pass
                 self.state = co.GameState.MENU
                 self.set_callbacks()
                 return
@@ -486,7 +498,7 @@ class Game:
 
         game_surface.blits([(particle.texture, (particle.x, particle.y)) for particle in self.particles if particle.is_fixed])
 
-        if self.state == co.GameState.GAME or self.terrain_generator.show_bonuses():
+        if self.state == co.GameState.GAME or (self.state == co.GameState.GAME and self.terrain_generator.show_bonuses()):
             font = utils.get_font(30)
             bonus_text_surface = font.render(f'Bonuses :', False, (0, 0, 0))
             game_surface.blit(bonus_text_surface, (co.BONUS_TEXT_COORD[0], co.BONUS_TEXT_COORD[1] + co.UI_TOP))

@@ -20,26 +20,26 @@ class Tutorial:
     def get_level_1_terrain(self):
         terrain = self._get_base_terrain()
 
-        # terrain[8][10] = Tile(TileType.NITROGEN, 10, 8)
-        # terrain[8][10].set_starting_resource(100, 5)
+        terrain[8][10] = Tile(TileType.NITROGEN, 10, 8)
+        terrain[8][10].set_starting_resource(100, 5)
 
         terrain[8][16] = Tile(TileType.WATER, 16, 8)
         terrain[8][16].set_starting_resource(100, 5)
 
-        # terrain[8][22] = Tile(TileType.PHOSPHORUS, 22, 8)
-        # terrain[8][22].set_starting_resource(100, 5)
+        terrain[8][22] = Tile(TileType.PHOSPHORUS, 22, 8)
+        terrain[8][22].set_starting_resource(100, 5)
 
-        # terrain[17][10] = Tile(TileType.ROCK, 17, 10)
-        # terrain[17][9] = Tile(TileType.ROCK, 17, 9)
+        terrain[17][10] = Tile(TileType.ROCK, 17, 10)
+        terrain[17][9] = Tile(TileType.ROCK, 17, 9)
 
-        # terrain[18][10] = Tile(TileType.WATER, 10, 18)
-        # terrain[18][10].set_starting_resource(120, 7)
+        terrain[18][10] = Tile(TileType.WATER, 10, 18)
+        terrain[18][10].set_starting_resource(120, 7)
 
-        # terrain[18][16] = Tile(TileType.PHOSPHORUS, 16, 18)
-        # terrain[18][16].set_starting_resource(120, 7)
+        terrain[18][16] = Tile(TileType.PHOSPHORUS, 16, 18)
+        terrain[18][16].set_starting_resource(120, 7)
 
-        # terrain[18][22] = Tile(TileType.NITROGEN, 22, 18)
-        # terrain[18][22].set_starting_resource(120, 7)
+        terrain[18][22] = Tile(TileType.NITROGEN, 22, 18)
+        terrain[18][22].set_starting_resource(120, 7)
 
         return terrain
 
