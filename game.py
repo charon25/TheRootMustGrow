@@ -31,6 +31,8 @@ class Game:
                 yield (0, 0)
         self.offset = repeat_00()
 
+        self.setup_sounds()
+
         self.clock = pyg.time.Clock()
 
         self.state: co.GameState = co.GameState.MENU
@@ -53,6 +55,23 @@ class Game:
 
         self.has_ended = False
 
+
+    def setup_sounds(self):
+        self.sounds: pyghelper.SoundManager = pyghelper.SoundManager()
+        self.sounds.add_sound(co.SOUND_CLICK_PATH, co.SOUND_CLICK, volume=0.4)
+        utils.add_multiple_sounds(self.sounds, co.SOUND_ROOT_GROW_PATHS, co.SOUND_ROOT_GROW, volume=0.6)
+        utils.add_multiple_sounds(self.sounds, co.SOUND_ROOT_CUT_PATHS, co.SOUND_ROOT_CUT, volume=0.6)
+        utils.add_multiple_sounds(self.sounds, co.SOUND_ROOT_DIE_PATHS, co.SOUND_ROOT_DIE, volume=0.6)
+        self.sounds.add_sound(co.SOUND_BONUS_PATH, co.SOUND_BONUS, volume=0.5)
+        utils.add_multiple_sounds(self.sounds, co.SOUND_WATER_PATHS, co.SOUND_WATER, volume=0.45)
+        utils.add_multiple_sounds(self.sounds, co.SOUND_RESOURCE_PATHS, co.SOUND_RESOURCE, volume=0.45)
+        self.sounds.add_sound(co.SOUND_TUTO_PAGE_PATH, co.SOUND_TUTO_PAGE, volume=0.5)
+        self.sounds.add_sound(co.SOUND_TUTO_END_PATH, co.SOUND_TUTO_END, volume=0.5)
+        self.sounds.add_sound(co.SOUND_LOSE_PATH, co.SOUND_LOSE, volume=0.75)
+        self.sounds.add_sound(co.SOUND_WARNING_PATH, co.SOUND_WARNING, volume=0.3)
+
+        # self.sounds.add_music(co.MUSIC_PATH, co.MUSIC)
+        # self.sounds.play_music(co.MUSIC, loop=True, volume=0.05)
 
     def start_game(self, tutorial: bool) -> None:
         # Terrain
@@ -125,9 +144,11 @@ class Game:
         if utils.point_in_rectangle(*data['pos'], co.QUIT_BTN_X, co.QUIT_BTN_Y, co.BTN_WIDTH, co.BTN_HEIGHT):
             self.stop()
         elif utils.point_in_rectangle(*data['pos'], co.TUTO_BTN_X, co.TUTO_BTN_Y, co.BTN_WIDTH, co.BTN_HEIGHT):
+            self.sounds.play_sound(co.SOUND_CLICK)
             self.tutorial_done = False
             self.start_game(tutorial=True)
         elif self.tutorial_done and utils.point_in_rectangle(*data['pos'], co.PLAY_BTN_X, co.PLAY_BTN_Y, co.BTN_WIDTH, co.BTN_HEIGHT):
+            self.sounds.play_sound(co.SOUND_CLICK)
             self.start_game(tutorial=False)
 
 
@@ -180,14 +201,18 @@ class Game:
             self.terrain[y_cross][x_cross].root = new_root
 
         if not auto:
+            self.sounds.play_sound(co.SOUND_ROOT_GROW)
+
             self.offset = self.screen_shake(utils.clamped_lerp(new_root.length, 0, co.SCREENSHAKE_LENGTH_MAX, 0, co.SCREENSHAKE_AMOUNT_MAX))
 
             mouse_tile_x, mouse_tile_y = mouse_x // co.TILE, mouse_y // co.TILE
             tile = self.terrain[mouse_tile_y][mouse_tile_x]
             if tile.is_resource_tile():
+                self.sounds.play_sound(co.SOUND_WATER if tile.type == TileType.WATER else co.SOUND_RESOURCE)
                 self.resources_tiles.append(tile)
                 new_root.resource_tile = tile
             elif tile.is_bonus_tile():
+                self.sounds.play_sound(co.SOUND_BONUS)
                 self.apply_bonus(tile)
                 self.particles.extend(Particle.generate_bonus_particles(tile.x * co.TILE + co.TILE / 2, tile.y * co.TILE + co.TILE / 2, tile.type))
                 tile.type = TileType.BASE
@@ -249,6 +274,10 @@ class Game:
             except ValueError:
                 pass
             else:
+                if not is_dead:
+                    self.sounds.play_sound(co.SOUND_ROOT_CUT)
+                else:
+                    self.sounds.play_sound(co.SOUND_ROOT_DIE)
                 self.offset = self.screen_shake(co.SCREENSHAKE_AMOUNT_MAX)
 
     def mouseup_game(self, data: dict[str, int]):
@@ -450,6 +479,7 @@ class Game:
                 self.terrain = self.terrain_generator.get_level_3_terrain()
                 self.max_visible_tiles = co.TILES_Y
             elif self.terrain_generator.level == 3:
+                self.sounds.play_sound(co.SOUND_TUTO_END)
                 self.current_height = 0
                 self.current_height_floored = 0
                 self.tutorial_done = True
@@ -463,6 +493,7 @@ class Game:
                 self.set_callbacks()
                 return
 
+            self.sounds.play_sound(co.SOUND_TUTO_PAGE)
             self.terrain_generator.level += 1
             self.roots = []
             self.create_initial_roots()
@@ -547,21 +578,28 @@ class Game:
             if self.total_gained[resource] > 0 and show_particle:
                 self.particles.extend(Particle.generate_extract_particle(*co.UI_RESOURCE_TEXTURE_COORDS[resource], TileType(resource.value), fixed=True))
 
-        if all(quantity > 0 for _, quantity in self.resources.items()):
-            self.decay_cooldown = -1
-        else:
+        if any(quantity <= 0 and self.total_gained[resource] < self.total_consummed[resource] for resource, quantity in self.resources.items()):
             if self.decay_cooldown < 0:
                 smallest_resource = min(quantity for _, quantity in self.resources.items())
                 self.decay_cooldown = utils.clamped_lerp(smallest_resource, co.MIN_DECAY_COOLDOWN_RESOURCE, 0, co.MIN_DECAY_COOLDOWN, co.STARTING_DECAY_COOLDOWN)
+        else:
+            self.decay_cooldown = -1
+
+        # if all(quantity > 0 or self.total_gained[] for resource, quantity in self.resources.items()):
+        #     self.decay_cooldown = -1
+        # else:
 
         self.resources_tiles = [tile for tile in self.resources_tiles if tile.resource > 0]
 
 
     def update_roots(self):
+        if int(self.decay_cooldown) % 100 == 45:
+            self.sounds.play_sound(co.SOUND_WARNING)
+
         if self.decay_cooldown > 0:
             self.decay_cooldown -= 1
 
-        if self.decay_cooldown == 0:
+        if -1 < self.decay_cooldown < 0:
             if len(self.roots) <= 1:
                 self.game_over()
             self.delete_root(self.roots[-1], True)
@@ -584,9 +622,9 @@ class Game:
             tile.root.overlined = True
 
     def game_over(self):
+        self.sounds.play_sound(co.SOUND_LOSE)
         self.state = co.GameState.MENU
         self.set_callbacks()
-        # TODO play sound
 
     def loop_game(self):
         self.generate_missing()

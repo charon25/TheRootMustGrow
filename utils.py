@@ -2,6 +2,7 @@ from math import ceil, cos, pi, sin
 from random import random
 
 import pygame as pyg
+import pyghelper
 
 import constants as co
 
@@ -85,3 +86,8 @@ def void(*args):
 
 def point_in_rectangle(x: int, y: int, left: int, top: int, width: int, height: int):
     return left <= x <= left + width and top <= y <= top + height
+
+
+def add_multiple_sounds(sound_manager: pyghelper.SoundManager, sounds, sound_name, volume=1.0):
+    for path in sounds:
+        sound_manager.add_sound(path, sound_name, volume=volume)

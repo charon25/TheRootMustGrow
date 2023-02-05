@@ -42,9 +42,9 @@ ROOT_END_LENGTH: dict[int, int] = {
 MAX_ROOT_WIDTH = max(ROOT_HEIGHTS.keys())
 MAX_ROOT_LENGTH = 350
 
-STARTING_DECAY_COOLDOWN = 300
-MIN_DECAY_COOLDOWN = 30
-MIN_DECAY_COOLDOWN_RESOURCE = -300
+STARTING_DECAY_COOLDOWN = 500
+MIN_DECAY_COOLDOWN = 90
+MIN_DECAY_COOLDOWN_RESOURCE = -450
 
 # Clicks
 LEFT_CLICK = 1
@@ -274,3 +274,41 @@ TUTORIAL_TEXTS = [None,
 
 TUTORIAL_TEXT_X = 5
 TUTORIAL_TEXT_Y_START = 20
+
+# Sons
+
+MUSIC = 'music'
+MUSIC_PATH= ''
+
+SOUND_CLICK = 'click'
+SOUND_CLICK_PATH = 'resources/audio/sounds/simple_click.wav'
+
+SOUND_ROOT_GROW = 'root_grow'
+SOUND_ROOT_GROW_PATHS = [f'resources/audio/sounds/root_grow_{i}.wav' for i in (1, 2, 3)]
+
+SOUND_ROOT_CUT = 'root_cut'
+SOUND_ROOT_CUT_PATHS = [f'resources/audio/sounds/root_cut_{i}.wav' for i in (1, 2, 3)]
+
+SOUND_ROOT_DIE = 'root_die'
+SOUND_ROOT_DIE_PATHS = [f'resources/audio/sounds/root_die_{i}.wav' for i in (1, 2)]
+
+SOUND_WATER = 'water'
+SOUND_WATER_PATHS = [f'resources/audio/sounds/water_{i}.wav' for i in (1, 2)]
+
+SOUND_RESOURCE = 'resource'
+SOUND_RESOURCE_PATHS = [f'resources/audio/sounds/resource_{i}.wav' for i in (1, 2)]
+
+SOUND_BONUS = 'bonus'
+SOUND_BONUS_PATH = 'resources/audio/sounds/bonus.wav'
+
+SOUND_TUTO_PAGE = 'tuto_page'
+SOUND_TUTO_PAGE_PATH = 'resources/audio/sounds/tuto_page.wav'
+
+SOUND_TUTO_END = 'tuto_end'
+SOUND_TUTO_END_PATH = 'resources/audio/sounds/tuto_end.wav'
+
+SOUND_LOSE = 'lose'
+SOUND_LOSE_PATH = 'resources/audio/sounds/lose.wav'
+
+SOUND_WARNING = 'warning'
+SOUND_WARNING_PATH = 'resources/audio/sounds/warning.wav'
