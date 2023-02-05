@@ -41,7 +41,6 @@ class Game:
         self.set_callbacks()
 
         self.tutorial_done: bool = False
-        self.in_toturial: bool = False
 
         def does_drag(data):self.is_dragging = self.is_clicking
         self.events.add_custom_event('drag_timer', does_drag)
@@ -51,16 +50,17 @@ class Game:
 
     def start_game(self, tutorial: bool) -> None:
         # Terrain
-        self.in_toturial = tutorial
         if not tutorial:
+            self.state = co.GameState.GAME
             self.terrain_generator = TerrainGenerator()
             self.max_visible_tiles = co.TILES_Y + co.STARTING_SCROLL_OFFSET
-            self.resources: dict[co.ResourceType, int] = {resource: 1200 for resource in list(co.ResourceType)} # TODO bonnes valeurs
+            self.resources: dict[co.ResourceType, int] = {resource: 250 for resource in list(co.ResourceType)}
 
         else:
+            self.state = co.GameState.TUTORIAL
             self.terrain_generator = Tutorial()
             self.max_visible_tiles = co.TILES_Y
-            self.resources: dict[co.ResourceType, int] = {resource: 100 for resource in list(co.ResourceType)} # TODO bonnes valeurs
+            self.resources: dict[co.ResourceType, int] = {resource: 100 for resource in list(co.ResourceType)}
 
         self.terrain: list[list[Tile]] = self.terrain_generator.starting_terrain()
 
@@ -118,12 +118,11 @@ class Game:
 
         if utils.point_in_rectangle(*data['pos'], co.QUIT_BTN_X, co.QUIT_BTN_Y, co.BTN_WIDTH, co.BTN_HEIGHT):
             self.stop()
-        elif utils.point_in_rectangle(*data['pos'], co.PLAY_BTN_X, co.PLAY_BTN_Y, co.BTN_WIDTH, co.BTN_HEIGHT):
-            if self.tutorial_done:
-                self.state = co.GameState.GAME
-            else:
-                self.state = co.GameState.TUTORIAL
-            self.start_game(tutorial=not self.tutorial_done)
+        elif utils.point_in_rectangle(*data['pos'], co.TUTO_BTN_X, co.TUTO_BTN_Y, co.BTN_WIDTH, co.BTN_HEIGHT):
+            self.tutorial_done = False
+            self.start_game(tutorial=True)
+        elif self.tutorial_done and utils.point_in_rectangle(*data['pos'], co.PLAY_BTN_X, co.PLAY_BTN_Y, co.BTN_WIDTH, co.BTN_HEIGHT):
+            self.start_game(tutorial=False)
 
 
     def create_initial_roots(self):
@@ -138,7 +137,6 @@ class Game:
             pyg.time.set_timer(pyg.event.Event(pyg.USEREVENT, {'name': 'drag_timer'}), 100, loops=1)
             self.is_clicking = True
             self.drag_start_y = data['pos'][1]
-            print(data['pos'][0] // co.TILE, data['pos'][1] // co.TILE)
         elif data['button'] == co.RIGHT_CLICK:
             self.root_ghost.disable()
 
@@ -189,7 +187,7 @@ class Game:
                 tile.type = TileType.BASE
                 self.offset = self.screen_shake(co.BONUS_SCREENSHAKE)
 
-            if mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET > self.max_visible_tiles:
+            if self.state == co.GameState.GAME and  mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET > self.max_visible_tiles:
                 self.max_visible_tiles = mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET
 
             new_root.parent.increase_width()
@@ -390,6 +388,13 @@ class Game:
                 if (x, y) == self.selected_tile:
                     game_surface.blit(tx.TILE_SELECTOR, (x * co.TILE, y * co.TILE - self.current_height_floored))
 
+        if self.state == co.GameState.TUTORIAL:
+            resource_tiles: list[Tile] = []
+            for row in self.terrain:
+                for tile in row:
+                    if tile.is_resource_tile() and tile.resource > 0:
+                        resource_tiles.append(tile)
+
         # Roots
         for root in self.roots:
             if root.is_visible(self.current_height_floored):
@@ -427,10 +432,28 @@ class Game:
 
             self.blit_overlined_text(game_surface, resource_str, font, x, y, center_x = True)
 
-        if self.state == co.GameState.TUTORIAL and self.terrain_generator.level == 1 and len(resource_tiles) == 0:
-            self.terrain_generator.next_level()
-            self.terrain = self.terrain_generator.get_level_2_terrain()
-            self.roots = [root for root in self.roots if root.id == 0]
+        if self.state == co.GameState.TUTORIAL and len(resource_tiles) == 0:
+            if self.terrain_generator.level == 1:
+                self.current_height = 0
+                self.current_height_floored = 0
+                self.terrain = self.terrain_generator.get_level_2_terrain()
+                self.max_visible_tiles = co.TILES_Y + 10
+            elif self.terrain_generator.level == 2:
+                self.current_height = 0
+                self.current_height_floored = 0
+                self.terrain = self.terrain_generator.get_level_3_terrain()
+                self.max_visible_tiles = co.TILES_Y
+            elif self.terrain_generator.level == 3:
+                self.current_height = 0
+                self.current_height_floored = 0
+                self.tutorial_done = True
+                self.state = co.GameState.MENU
+                self.set_callbacks()
+                return
+
+            self.terrain_generator.level += 1
+            self.roots = []
+            self.create_initial_roots()
 
         # Bonus
         font = utils.get_font(15)
@@ -549,8 +572,9 @@ class Game:
             tile.root.overlined = True
 
     def game_over(self):
-        print('GAME OVER')
-        self.stop()
+        self.state = co.GameState.MENU
+        self.set_callbacks()
+        # TODO play sound
 
     def loop_game(self):
         self.generate_missing()
@@ -584,7 +608,7 @@ class Game:
         self.events.listen()
 
         if self.state == co.GameState.MENU:
-            self.screen.blit(tx.MENU, (0, 0))
+            self.screen.blit(tx.MENU_TUTO if not self.tutorial_done else tx.MENU, (0, 0))
         elif self.state in (co.GameState.TUTORIAL, co.GameState.GAME):
             self.loop_game()
 

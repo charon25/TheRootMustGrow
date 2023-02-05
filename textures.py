@@ -54,3 +54,4 @@ BONUS_PARTICLES = [pyghelper.Image.create(f'resources/textures/particles/bonus_{
 
 
 MENU = pyghelper.Image.create('resources/textures/menu.png')
+MENU_TUTO = pyghelper.Image.create('resources/textures/menu_tuto.png')

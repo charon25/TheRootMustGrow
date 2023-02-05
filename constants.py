@@ -20,8 +20,9 @@ class GameState(Enum):
 
 # Menu
 
-PLAY_BTN_X, PLAY_BTN_Y = (150, 434)
-QUIT_BTN_X, QUIT_BTN_Y = (150, 596)
+PLAY_BTN_X, PLAY_BTN_Y = (150, 384)
+TUTO_BTN_X, TUTO_BTN_Y = (150, 510)
+QUIT_BTN_X, QUIT_BTN_Y = (150, 636)
 BTN_WIDTH, BTN_HEIGHT = (500, 90)
 
 
@@ -242,13 +243,26 @@ TUTORIAL_MAX_LEVEL = 4
 
 TUTORIAL_TEXTS = [None,
     [
+        "Tutorial",
         "Click on a existing root (===>)", "then on the ground", "to create a new root.", "",
         "Connect a root to resources", "to harvest them.", "", "", "", "", "", "",
         "But beware! The more roots, the faster you lose resources!", "",
         "You can delete an end root by right clicking it", "",
-        "Go deeper and deeper to get more resources.", "",
+        "Get all the resources from the screen to go to the next screen.", ""
+        # "Go deeper and deeper to get more resources.", "",
         "The root must GROW!"
     ],
+    [
+        "The map is vertically infinite!", "",
+        "To scroll, use the mouse wheel", "or drag the screen with left click", "", "",
+        "You are only limited by your current longest root.", "",
+        "By the way, the root you place is limited in length.", 
+        "So you need to split it up to go deeper."
+    ],
+    [
+        "You can also find bonuses on the way.", "", "",
+        "They provide permanent upgrade for resource management."
+    ]
 ]
 
 TUTORIAL_TEXT_X = 5
