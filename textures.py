@@ -22,6 +22,8 @@ PHOSPHORUS_TILES = [pyghelper.Image.create(f'resources/textures/tiles/phosphorus
 ROCK_TILE_TEXTURES_COUNT = 2
 ROCK_TILES = [pyghelper.Image.create(f'resources/textures/tiles/rock_{i}.png') for i in range(1, ROCK_TILE_TEXTURES_COUNT + 1)]
 
+TILE_SELECTOR = pyghelper.Image.create('resources/textures/tiles/tile_selector.png')
+
 
 # ROOTS
 ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_w{i}.png') for i in (1, 2, 3, 4)}

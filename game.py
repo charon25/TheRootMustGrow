@@ -44,6 +44,7 @@ class Game:
         # Terrain
         self.terrain_generator = TerrainGenerator()
         self.terrain: list[list[Tile]] = self.terrain_generator.starting_terrain()
+        self.selected_tile: tuple[int, int] = (-1, -1)
         ## Drag
         self.current_height: int = 0
         self.current_height_floored: int = 0
@@ -120,7 +121,6 @@ class Game:
             if tile.is_resource_tile():
                 self.resources_tiles.append(tile)
                 new_root.resource_tile = tile
-                print(new_root.resource_tile.absorption_modifier)
 
             if mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET > self.max_visible_tiles:
                 self.max_visible_tiles = mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET
@@ -316,6 +316,8 @@ class Game:
                         resource_tiles.append(tile)
                     if has_resources or tile.type == TileType.ROCK:
                         game_surface.blit(tile.resource_textures, (x * co.TILE, y * co.TILE))
+                if (x, y) == self.selected_tile:
+                    game_surface.blit(tx.TILE_SELECTOR, (x * co.TILE, y * co.TILE))
 
         # Roots
         for root in self.roots:
@@ -414,6 +416,10 @@ class Game:
     def check_mouse_over_root(self):
         mouse_x, mouse_y = pyg.mouse.get_pos()
         mouse_tile_x, mouse_tile_y = mouse_x // co.TILE, (mouse_y + self.current_height) // co.TILE
+        if 0 <= mouse_y <= co.UI_TOP: 
+            self.selected_tile = (mouse_tile_x, mouse_tile_y)
+        else:
+            self.selected_tile = (-1, -1)
         tile = self.terrain[mouse_tile_y][mouse_tile_x]
         if not tile.has_root:
             return
