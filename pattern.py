@@ -6,13 +6,18 @@ BASE_PATTERN = ['x']
 
 PATTERN1 = ([' r', ' r', 'xr', ' r', ' r'], (0, co.TILES_X / 3))
 PATTERN2 = (['r ', 'r ', 'rx', 'r ', 'r '], (co.TILES_X * 2 / 3, co.TILES_X))
+PATTERN8 = (['xs'], (0, co.TILES_X + 1))
 
-LEVEL_1 = [PATTERN1, PATTERN2]
+LEVEL_1 = [PATTERN1, PATTERN2, PATTERN8]
 
 PATTERN3 = (['rr', 'xr', ' r'], (0, co.TILES_X * 0.45))
 PATTERN4 = (['rr', 'rx', 'r '], (co.TILES_X * 0.55, co.TILES_X))
+PATTERN5 = ([' x', 's '], (0, co.TILES_X + 1))
+PATTERN6 = (['x ', ' s'], (0, co.TILES_X + 1))
+PATTERN7 = ([' xs', 'sxs', ' x '], (5, co.TILES_X - 5))
+PATTERN9 = (['rxr', 'xrx'], (0, co.TILES_X + 1))
 
-LEVEL_2 = [PATTERN3, PATTERN4]
+LEVEL_2 = [PATTERN3, PATTERN3] * 3 + [PATTERN5, PATTERN6] * 2 + [PATTERN7, PATTERN9]
 
 def get_pattern(pattern_list: list[tuple[str, tuple[float, float]]], x: int, y: int) -> list[str]:
     possible_patterns = [pattern for (pattern, (min_x, max_x)) in pattern_list if min_x <= x <= max_x]

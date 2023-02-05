@@ -31,7 +31,7 @@ def exact_crossing_tiles(start_x: int, start_y: int, end_x: int, end_y: int) -> 
     dx, dy = delta_x / distance, delta_y / distance
     x, y = start_x, start_y
     total_dy = 0
-    
+
     points = set()
     while abs(total_dy) < abs(delta_y):
         total_dy += dy

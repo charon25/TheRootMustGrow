@@ -355,7 +355,7 @@ class Game:
         fps_text_surface = font.render(f'{self.fps:.0f} FPS', False, (0, 0, 0))
         game_surface.blit(fps_text_surface, (co.FPS_COORDS[0], co.FPS_COORDS[1] + co.UI_TOP))
 
-        self.blit_overlined_text(game_surface, f'Depth : {self.current_height_floored // co.TILE:.0f} - {self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT:.0f}', utils.get_font(30), *co.DEPTH_COORDS)
+        self.blit_overlined_text(game_surface, f'Depth : {self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT:.0f} / {self.max_visible_tiles - co.UI_HEIGHT}', utils.get_font(30), *co.DEPTH_COORDS)
 
         self.screen.blit(game_surface, next(self.offset))
 

@@ -9,6 +9,10 @@ import textures as tx
 from tile import Tile, TileType
 
 
+def generate_random_depths(count: int, start_y: int, height: int) -> list[int]:
+    gap = height // count
+    return [start_y + gap * i + randint(0, gap) for i in range(count)]
+
 class TerrainGenerator:
     def __init__(self) -> None:
         self.depth: int = 0
@@ -20,6 +24,7 @@ class TerrainGenerator:
         self.patterns_offset: list[int] = list()
         # Ressources
         self.current_resource_probability: float = 0
+        self.last_resource_type: TileType = TileType.WATER
 
     def generate_tile(self, x: int, y: int):
         tile = Tile(TileType.BASE, x, y)
@@ -48,6 +53,10 @@ class TerrainGenerator:
                 tile = Tile(TileType.ROCK, x + dx, y)
             elif c == 'x':
                 tile = Tile(next(self.terrain_resources), x + dx, y)
+                tile.resource = next(self.resources_quantities)
+                self.last_resource_type = tile.type
+            elif c == 's':
+                tile = Tile(self.last_resource_type, x + dx, y)
                 tile.resource = next(self.resources_quantities)
             else:
                 tile = Tile(TileType.BASE, x + dx, y)
@@ -115,7 +124,14 @@ class TerrainGenerator:
 
             self.patterns_offset[index] += 1
 
-        row = [Tile(TileType.BASE, x, self.depth) if tile is None else tile for x, tile in enumerate(row)]
+        row = [
+            (
+                Tile(TileType.ROCK, x, self.depth) 
+                if random() < co.LEVELS_ROCK_PROBABILITY[level]
+                else Tile(TileType.BASE, x, self.depth)
+            ) if tile is None else tile
+            for x, tile in enumerate(row)
+        ]
 
         if random() < self.current_resource_probability:
             resource_x = randrange(0, co.TILES_X)
@@ -128,13 +144,14 @@ class TerrainGenerator:
 
         return row[:co.TILES_X]
 
+
     def _setup_level_1(self):
         self.terrain_resources = self._equitable_resource(2)
         self.resources_quantities = self._resources_quantities(*co.LEVEL_1_RESOURCES_QUANTITY)
 
         self.in_pattern = []
         self.pattern_x = [randint(0, co.TILES_X) - 2 for index in range(co.LEVEL_1_PATTERN_COUNT)]
-        self.pattern_depths = [randint(self.depth, co.LEVEL_1_DEPTH) for _ in range(co.LEVEL_1_PATTERN_COUNT)]
+        self.pattern_depths = generate_random_depths(co.LEVEL_1_PATTERN_COUNT, self.depth, co.LEVEL_1_HEIGHT)
         self.patterns = [pat.get_pattern(pat.LEVEL_1, self.pattern_x[index], self.pattern_depths[index]) for index in range(co.LEVEL_1_PATTERN_COUNT)]
         self.patterns_offset = [0] * co.LEVEL_1_PATTERN_COUNT
 
@@ -146,7 +163,7 @@ class TerrainGenerator:
 
         self.in_pattern = []
         self.pattern_x = [randint(0, co.TILES_X) - 2 for index in range(co.LEVEL_2_PATTERN_COUNT)]
-        self.pattern_depths = [randint(self.depth, co.LEVEL_2_DEPTH) for _ in range(co.LEVEL_2_PATTERN_COUNT)]
+        self.pattern_depths = generate_random_depths(co.LEVEL_2_PATTERN_COUNT, self.depth, co.LEVEL_2_HEIGHT)
         self.patterns = [pat.get_pattern(pat.LEVEL_2, self.pattern_x[index], self.pattern_depths[index]) for index in range(co.LEVEL_2_PATTERN_COUNT)]
         self.patterns_offset = [0] * co.LEVEL_2_PATTERN_COUNT
 

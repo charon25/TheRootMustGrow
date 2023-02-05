@@ -57,3 +57,6 @@ class Tile:
 
     def get_resource_type(self):
         return co.ResourceType(self.type.value)
+
+    def __repr__(self) -> str:
+        return f'{self.type.name} : {self.x} / {self.y}'
