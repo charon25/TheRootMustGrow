@@ -1,5 +1,10 @@
 from math import atan2, ceil, cos, dist, sin
+from os import getpid
+from tkinter import E
+from psutil import Process
 import random
+
+
 import pygame as pyg
 from pygame import Surface
 import pyghelper
@@ -13,6 +18,7 @@ import textures as tx
 import utils
 
 
+process = Process(getpid())
 
 
 class Game:
@@ -74,6 +80,9 @@ class Game:
 
         # Particules
         self.particles: list[Particle] = list()
+
+        self.ticks = 0
+        self.memory_usage = process.memory_info().rss
 
         self.create_initial_roots()
 
@@ -395,10 +404,6 @@ class Game:
         total_resources_text_surface = font.render(f'Total roots : {self.total_roots / co.TILE:.0f}', False, (0, 0, 0))
         game_surface.blit(total_resources_text_surface, (co.TOTAL_ROOTS_TEXT_COORD[0], co.TOTAL_ROOTS_TEXT_COORD[1] + co.UI_TOP))
 
-
-        fps_text_surface = font.render(f'{self.fps:.0f} FPS', False, (0, 0, 0))
-        game_surface.blit(fps_text_surface, (co.FPS_COORDS[0], co.FPS_COORDS[1] + co.UI_TOP))
-
         self.blit_overlined_text(game_surface, f'Depth : {self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT:.0f} / {self.max_visible_tiles - co.UI_HEIGHT} [{self.terrain_generator.get_level(self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT)}]', utils.get_font(30), *co.DEPTH_COORDS)
 
         game_surface.blits([(particle.texture, (particle.x, particle.y)) for particle in self.particles if particle.is_fixed])
@@ -415,6 +420,13 @@ class Game:
         game_surface.blit(production_bonus_text_surface, (co.PRODUCTION_BONUS_TEXT_COORD[0], co.PRODUCTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
         consumption_bonus_text_surface = font.render(f'Consumption   {"-" if self.consumption_bonus == 0 else ""}{(self.consumption_bonus - 1) * 100:.1f} %', False, (0, 0, 0))
         game_surface.blit(consumption_bonus_text_surface, (co.CONSUMPTION_BONUS_TEXT_COORD[0], co.CONSUMPTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
+
+        font = utils.get_font(16)
+        fps_text_surface = font.render(f'{self.fps:.0f} FPS', False, (0, 0, 0))
+        game_surface.blit(fps_text_surface, (co.FPS_COORDS[0], co.FPS_COORDS[1] + co.UI_TOP))
+
+        memory_text_surface = font.render(f'{self.memory_usage / (1024 * 1024):.1f} Mio', False, (0, 0, 0))
+        game_surface.blit(memory_text_surface, (co.MEMORY_COORDS[0], co.MEMORY_COORDS[1] + co.UI_TOP))
 
 
         # Fin
@@ -466,16 +478,18 @@ class Game:
 
     def check_mouse_over_root(self):
         mouse_x, mouse_y = pyg.mouse.get_pos()
+
+        if mouse_y > co.UI_TOP:
+            return
+
         mouse_tile_x, mouse_tile_y = mouse_x // co.TILE, (mouse_y + self.current_height) // co.TILE
-        if 0 <= mouse_y <= co.UI_TOP: 
-            self.selected_tile = (mouse_tile_x, mouse_tile_y)
-        else:
-            self.selected_tile = (-1, -1)
+        self.selected_tile = (mouse_tile_x, mouse_tile_y)
         tile = self.terrain[mouse_tile_y][mouse_tile_x]
+
         if not tile.has_root:
             return
 
-        if not tile.root.not_cuttable and tile.root.contains_point(mouse_x, mouse_y):
+        if not tile.root.not_cuttable and tile.root.contains_point(mouse_x, mouse_y + self.current_height):
             tile.root.overlined = True
 
     def game_over(self):
@@ -495,7 +509,13 @@ class Game:
             if particle.done:
                 self.particles.remove(particle)
 
+        if self.ticks == 60:
+            self.ticks = 0
+            self.memory_usage = process.memory_info().rss
+
         self.draw_terrain()
+
+        self.ticks += 1
 
     def loop(self) -> None:
         dt = self.clock.tick(60)
