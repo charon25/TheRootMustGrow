@@ -1,4 +1,4 @@
-from math import cos, pi, sin
+from math import ceil, cos, pi, sin
 from random import random
 
 import pygame as pyg
@@ -52,15 +52,28 @@ def generate_circular_pos_velocity_in_disk(disk_radius: float, x_center: float, 
 def random_sym_float(amplitude: float):
     return 2 * random() * amplitude - amplitude
 
-def get_resource_string(quantity: float, divisor: int, letter: str) -> str:
+def get_resource_string(quantity: float, divisor: int, letter: str, after_comma: int = 1) -> str:
     q, r = quantity // divisor, quantity % divisor
-    r //= (divisor // 10)
+    r = round(r / (divisor // (10 ** after_comma)), 0)
 
     if q > 1000:
         return f'999{letter}'
     if q > 10 or r == 0:
         return f'{q:.0f}{letter}'
     return f'{q:.0f}{letter}{r:.0f}'
+
+def int_to_small_string(value: int, after_comma: int = 1, apply_ceil: bool = False) -> str:
+    if 1_000 > value >= 0:
+        if apply_ceil:
+            return f'{ceil(value):.{after_comma - 1}f}'
+        else:
+            return f'{value:.{after_comma - 1}f}'
+    elif 1_000_000 > value >= 1_000:
+        return get_resource_string(value, 1_000, 'K', after_comma)
+    elif 1_000_000_000 > value >= 1_000_000:
+        return get_resource_string(value, 1_000_000, 'M', after_comma)
+    elif value >= 1_000_000_000:
+        return get_resource_string(value, 1_000_000_000, 'B', after_comma)
 
 def random_float(min: float, max: float):
     return random() * (max - min) + min

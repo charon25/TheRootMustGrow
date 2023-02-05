@@ -55,7 +55,7 @@ class Game:
         self.max_visible_tiles = co.TILES_Y + 10000#co.STARTING_SCROLL_OFFSET
 
         # Ressources
-        self.resources: dict[co.ResourceType, int] = {resource: 100 for resource in list(co.ResourceType)} # TODO bonnes valeurs
+        self.resources: dict[co.ResourceType, int] = {resource: 1200 for resource in list(co.ResourceType)} # TODO bonnes valeurs
         self.resources_tiles: list[Tile] = list()
         self.absorption_rate: dict[co.ResourceType, float] = co.STARTING_ABSORPTION_RATE.copy()
         self.consumption_rate: dict[co.ResourceType, float] = co.STARTING_CONSUMPTION_RATE.copy()
@@ -63,7 +63,7 @@ class Game:
         self.total_consummed: dict[co.ResourceType, float] = {resource: 0 for resource in co.ResourceType}
         # Bonus
         self.production_bonus: float = 0
-        self.consumption_bonus: float = 0
+        self.consumption_bonus: float = 1
 
         # Roots
         self.root_ghost: RootGhost = RootGhost()
@@ -115,7 +115,7 @@ class Game:
             self.production_bonus += tile.bonus_value
 
         if bonus_type == co.BonusType.CONSUMPTION:
-            self.consumption_bonus += tile.bonus_value
+            self.consumption_bonus *= (1 + tile.bonus_value)
 
     def create_root_from_ghost(self, root_ghost: RootGhost, mouse_x: int, mouse_y: int, auto: bool = False) -> bool:
         crossing_tiles = self.get_crossing_tile_root_ghost(root_ghost, mouse_x, mouse_y)
@@ -386,7 +386,7 @@ class Game:
 
         font = utils.get_font(25)
         for resource in co.ResourceType:
-            resource_text_surface = font.render(f'{co.RESOURCE_TEXT_NAME[resource]}{co.RESOURCE_SPACES[resource]}  {self.resources[resource]:.0f} (- {self.total_consummed[resource] * 60:.1f}/s) (+ {self.total_gained[resource] * 60:.1f}/s)', False, (0, 0, 0))
+            resource_text_surface = font.render(f'{co.RESOURCE_TEXT_NAME[resource]}{co.RESOURCE_SPACES[resource]}  {utils.int_to_small_string(self.resources[resource], 1, True)} (- {utils.int_to_small_string(self.total_consummed[resource] * 60, 2)}/s) (+ {utils.int_to_small_string(self.total_gained[resource] * 60, 2)}/s)', False, (0, 0, 0))
             x, y = co.RESOURCE_TEXT_COORDS[resource]
             game_surface.blit(resource_text_surface, (x, y + co.UI_TOP + co.TILE / 2 - resource_text_surface.get_height() / 2))
 
@@ -408,9 +408,12 @@ class Game:
         game_surface.blit(bonus_text_surface, (co.BONUS_TEXT_COORD[0], co.BONUS_TEXT_COORD[1] + co.UI_TOP))
 
         font = utils.get_font(25)
-        production_bonus_text_surface = font.render(f'Production    +{self.production_bonus * 100:.1f} %', False, (0, 0, 0))
+        if self.production_bonus < 1:
+            production_bonus_text_surface = font.render(f'Production    +{self.production_bonus * 100:.1f} %', False, (0, 0, 0))
+        else:
+            production_bonus_text_surface = font.render(f'Production    x{(1 + self.production_bonus):.2f}', False, (0, 0, 0))
         game_surface.blit(production_bonus_text_surface, (co.PRODUCTION_BONUS_TEXT_COORD[0], co.PRODUCTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
-        consumption_bonus_text_surface = font.render(f'Consumption   {"-" if self.consumption_bonus == 0 else ""}{self.consumption_bonus * 100:.1f} %', False, (0, 0, 0))
+        consumption_bonus_text_surface = font.render(f'Consumption   {"-" if self.consumption_bonus == 0 else ""}{(self.consumption_bonus - 1) * 100:.1f} %', False, (0, 0, 0))
         game_surface.blit(consumption_bonus_text_surface, (co.CONSUMPTION_BONUS_TEXT_COORD[0], co.CONSUMPTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
 
 
@@ -433,7 +436,7 @@ class Game:
 
         self.total_roots = sum(root.length for root in self.roots)
         for resource in co.ResourceType:
-            consumed = self.total_roots * self.consumption_rate[resource] * (1 + self.consumption_bonus)
+            consumed = self.total_roots * self.consumption_rate[resource] * self.consumption_bonus
             self.resources[resource] -= consumed
             self.total_consummed[resource] = consumed
 
