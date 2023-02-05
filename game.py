@@ -96,12 +96,6 @@ class Game:
             mouse_x,
             mouse_y
         )
-        return compute_crossing_tiles(
-            int(root_ghost.start_x // co.TILE),
-            int(root_ghost.start_y // co.TILE),
-            mouse_x // co.TILE,
-            mouse_y // co.TILE
-        )
 
     def get_exact_crossing_tile_root_ghost(self, root_ghost: RootGhost, mouse_x: int, mouse_y: int) -> list[tuple[int, int]]:
         return exact_crossing_tiles(
@@ -267,6 +261,7 @@ class Game:
                 end_y = int(self.root_ghost.start_y - sin(angle) * co.MAX_ROOT_LENGTH)
                 self.root_ghost.set_endpoint(end_x, end_y)
                 self.root_ghost.correct = False
+            
 
     def mousewheel_game(self, data: dict[str, int]):
         self.scroll_screen(data['y'] * co.TILE)
@@ -323,7 +318,9 @@ class Game:
         # Roots
         for root in self.roots:
             if root.is_visible(self.current_height_floored):
+                root._update_texture()
                 game_surface.blit(root.texture, (root.x, root.y - self.current_height_floored))
+            root.overlined = False
 
         # Particules
 
@@ -381,15 +378,6 @@ class Game:
 
                 if tile.resource == 0:
                     tile.root.resource_tile = None
-                # if tile.resource > self.absorption_rate[resource]:
-                #     tile.resource -= self.absorption_rate[resource]
-                #     self.resources[resource] += self.absorption_rate[resource]
-                #     self.total_gained[resource] += self.absorption_rate[resource]
-                # else:
-                #     self.resources[resource] += tile.resource
-                #     self.total_gained[resource] += tile.resource
-                #     tile.resource = 0
-                #     tile.root.resource_tile = None
 
         self.total_roots = sum(root.length for root in self.roots)
         for resource in co.ResourceType:
@@ -416,6 +404,15 @@ class Game:
             self.delete_root(self.roots[-1], True)
             self.decay_cooldown = -1
 
+    def check_mouse_over_root(self):
+        mouse_x, mouse_y = pyg.mouse.get_pos()
+        mouse_tile_x, mouse_tile_y = mouse_x // co.TILE, (mouse_y + self.current_height) // co.TILE
+        tile = self.terrain[mouse_tile_y][mouse_tile_x]
+        if not tile.has_root:
+            return
+
+        if not tile.root.not_cuttable and tile.root.contains_point(mouse_x, mouse_y):
+            tile.root.overlined = True
 
     def game_over(self):
         print('GAME OVER')
@@ -423,6 +420,8 @@ class Game:
 
     def loop_game(self):
         self.generate_missing()
+
+        self.check_mouse_over_root()
 
         self.update_resources()
         self.update_roots()

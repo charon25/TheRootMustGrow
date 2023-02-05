@@ -117,7 +117,6 @@ class TerrainGenerator:
             self.patterns_offset[index] += 1
 
         rock_probability = co.LEVELS_ROCK_PROBABILITY[level] if level <= 4 else co.get_end_rock_probability(self.depth)
-        print(rock_probability)
 
         row = [
             (

@@ -42,14 +42,14 @@ def exact_crossing_tiles(start_x: int, start_y: int, end_x: int, end_y: int) -> 
     return list(points)
 
 
-def update_texture(start_x: int, start_y: int, end_x: int, end_y: int, correct: bool, width: int) -> tuple[Surface, float, float]:
+def update_texture(start_x: int, start_y: int, end_x: int, end_y: int, correct: bool, width: int, overlined: bool = False) -> tuple[Surface, float, float]:
     height = co.ROOT_HEIGHTS[width]
     distance = dist((end_x, end_y), (start_x, start_y))
     angle = -atan2(end_y - start_y, end_x - start_x) # radians
 
     texture = Surface((distance, height), flags=pyg.SRCALPHA)
-    surface = tx.ROOTS[width] if correct else tx.RED_ROOTS[width]
-    end = tx.ROOTS_END[width] if correct else tx.RED_ROOTS_END[width]
+    surface = (tx.ROOTS[width] if correct else tx.RED_ROOTS[width]) if not overlined else tx.OVER_ROOTS[width]
+    end = (tx.ROOTS_END[width] if correct else tx.RED_ROOTS_END[width]) if not overlined else tx.OVER_ROOTS_END[width]
     texture.blit(surface, (0, 0), area=pyg.Rect(0, 0, distance - co.ROOT_END_LENGTH[width], height))
     texture.blit(end, (texture.get_width() - co.ROOT_END_LENGTH[width], 0))
     texture = pyg.transform.rotate(texture, angle * 180 / pi)
@@ -78,6 +78,7 @@ class Root:
         self.is_dead = False
         self.not_cuttable = not_cuttable
         self.resource_tile = None
+        self.overlined: bool = False
 
     def __repr__(self) -> str:
         return f'root {self.id}'
@@ -141,7 +142,7 @@ class Root:
 
 
     def _update_texture(self):
-        self.texture, self.x, self.y = update_texture(self.start_x, self.start_y, self.end_x, self.end_y, True, self.width)
+        self.texture, self.x, self.y = update_texture(self.start_x, self.start_y, self.end_x, self.end_y, True, self.width, self.overlined)
 
     def is_visible(self, current_height: int):
         bottom = self.y + self.texture_height - current_height

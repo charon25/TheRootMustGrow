@@ -26,8 +26,10 @@ ROCK_TILES = [pyghelper.Image.create(f'resources/textures/tiles/rock_{i}.png') f
 # ROOTS
 ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_w{i}.png') for i in (1, 2, 3, 4)}
 RED_ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_red_w1.png') for i in (1, 2, 3, 4)}
+OVER_ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_over_w{i}.png') for i in (1, 2, 3, 4)}
 ROOTS_END: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/end_w{i}.png') for i in (1, 2, 3, 4)}
 RED_ROOTS_END: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/end_red_w1.png') for i in (1, 2, 3, 4)}
+OVER_ROOTS_END: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/end_over_w{i}.png') for i in (1, 2, 3, 4)}
 
 # PARTICLES
 
