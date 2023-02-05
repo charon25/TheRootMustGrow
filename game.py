@@ -15,6 +15,7 @@ from particle import Particle
 from root import compute_crossing_tiles, exact_crossing_tiles, RootGhost, Root
 from tile import Tile, TileType
 import textures as tx
+from tutorial import Tutorial
 import utils
 
 
@@ -53,10 +54,15 @@ class Game:
         self.in_toturial = tutorial
         if not tutorial:
             self.terrain_generator = TerrainGenerator()
-            self.terrain: list[list[Tile]] = self.terrain_generator.starting_terrain()
             self.max_visible_tiles = co.TILES_Y + co.STARTING_SCROLL_OFFSET
+            self.resources: dict[co.ResourceType, int] = {resource: 1200 for resource in list(co.ResourceType)} # TODO bonnes valeurs
+
         else:
-            print('tuto')
+            self.terrain_generator = Tutorial()
+            self.max_visible_tiles = co.TILES_Y
+            self.resources: dict[co.ResourceType, int] = {resource: 100 for resource in list(co.ResourceType)} # TODO bonnes valeurs
+
+        self.terrain: list[list[Tile]] = self.terrain_generator.starting_terrain()
 
         self.selected_tile: tuple[int, int] = (-1, -1)
         ## Drag
@@ -68,7 +74,6 @@ class Game:
         self.max_height: int = 0
 
         # Ressources
-        self.resources: dict[co.ResourceType, int] = {resource: 1200 for resource in list(co.ResourceType)} # TODO bonnes valeurs
         self.resources_tiles: list[Tile] = list()
         self.absorption_rate: dict[co.ResourceType, float] = co.STARTING_ABSORPTION_RATE.copy()
         self.consumption_rate: dict[co.ResourceType, float] = co.STARTING_CONSUMPTION_RATE.copy()
@@ -133,6 +138,7 @@ class Game:
             pyg.time.set_timer(pyg.event.Event(pyg.USEREVENT, {'name': 'drag_timer'}), 100, loops=1)
             self.is_clicking = True
             self.drag_start_y = data['pos'][1]
+            print(data['pos'][0] // co.TILE, data['pos'][1] // co.TILE)
         elif data['button'] == co.RIGHT_CLICK:
             self.root_ghost.disable()
 
@@ -391,6 +397,16 @@ class Game:
                 game_surface.blit(root.texture, (root.x, root.y - self.current_height_floored))
             root.overlined = False
 
+        # Tuto
+        font = utils.get_font(30)
+        if self.state == co.GameState.TUTORIAL:
+            level = self.terrain_generator.level
+            lines = co.TUTORIAL_TEXTS[level]
+            y = co.TUTORIAL_TEXT_Y_START
+            for line in lines:
+                self.blit_overlined_text(game_surface, line, font, co.TUTORIAL_TEXT_X, y, False)
+                y += 20
+
         # Particules
 
         game_surface.blits([(particle.texture, (particle.x, particle.y - self.current_height_floored)) for particle in self.particles if particle.is_visible(self.current_height_floored) and not particle.is_fixed])
@@ -410,6 +426,11 @@ class Game:
                 resource_str = utils.get_resource_string(tile.resource, 1_000_000_000, 'B')
 
             self.blit_overlined_text(game_surface, resource_str, font, x, y, center_x = True)
+
+        if self.state == co.GameState.TUTORIAL and self.terrain_generator.level == 1 and len(resource_tiles) == 0:
+            self.terrain_generator.next_level()
+            self.terrain = self.terrain_generator.get_level_2_terrain()
+            self.roots = [root for root in self.roots if root.id == 0]
 
         # Bonus
         font = utils.get_font(15)
@@ -442,18 +463,19 @@ class Game:
 
         game_surface.blits([(particle.texture, (particle.x, particle.y)) for particle in self.particles if particle.is_fixed])
 
-        font = utils.get_font(30)
-        bonus_text_surface = font.render(f'Bonuses :', False, (0, 0, 0))
-        game_surface.blit(bonus_text_surface, (co.BONUS_TEXT_COORD[0], co.BONUS_TEXT_COORD[1] + co.UI_TOP))
+        if self.state == co.GameState.GAME or self.terrain_generator.show_bonuses():
+            font = utils.get_font(30)
+            bonus_text_surface = font.render(f'Bonuses :', False, (0, 0, 0))
+            game_surface.blit(bonus_text_surface, (co.BONUS_TEXT_COORD[0], co.BONUS_TEXT_COORD[1] + co.UI_TOP))
 
-        font = utils.get_font(25)
-        if self.production_bonus < 1:
-            production_bonus_text_surface = font.render(f'Production    +{self.production_bonus * 100:.1f} %', False, (0, 0, 0))
-        else:
-            production_bonus_text_surface = font.render(f'Production    x{(1 + self.production_bonus):.2f}', False, (0, 0, 0))
-        game_surface.blit(production_bonus_text_surface, (co.PRODUCTION_BONUS_TEXT_COORD[0], co.PRODUCTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
-        consumption_bonus_text_surface = font.render(f'Consumption   {"-" if self.consumption_bonus == 0 else ""}{(self.consumption_bonus - 1) * 100:.1f} %', False, (0, 0, 0))
-        game_surface.blit(consumption_bonus_text_surface, (co.CONSUMPTION_BONUS_TEXT_COORD[0], co.CONSUMPTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
+            font = utils.get_font(25)
+            if self.production_bonus < 1:
+                production_bonus_text_surface = font.render(f'Production    +{self.production_bonus * 100:.1f} %', False, (0, 0, 0))
+            else:
+                production_bonus_text_surface = font.render(f'Production    x{(1 + self.production_bonus):.2f}', False, (0, 0, 0))
+            game_surface.blit(production_bonus_text_surface, (co.PRODUCTION_BONUS_TEXT_COORD[0], co.PRODUCTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
+            consumption_bonus_text_surface = font.render(f'Consumption   {"-" if self.consumption_bonus == 0 else ""}{(self.consumption_bonus - 1) * 100:.1f} %', False, (0, 0, 0))
+            game_surface.blit(consumption_bonus_text_surface, (co.CONSUMPTION_BONUS_TEXT_COORD[0], co.CONSUMPTION_BONUS_TEXT_COORD[1] + co.UI_TOP))
 
         font = utils.get_font(16)
         fps_text_surface = font.render(f'{self.fps:.0f} FPS', False, (0, 0, 0))
@@ -523,7 +545,7 @@ class Game:
         if not tile.has_root:
             return
 
-        if not tile.root.not_cuttable and tile.root.contains_point(mouse_x, mouse_y + self.current_height):
+        if tile.root.contains_point(mouse_x, mouse_y + self.current_height):
             tile.root.overlined = True
 
     def game_over(self):

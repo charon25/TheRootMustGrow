@@ -236,3 +236,20 @@ CONSUMPTION_BONUS_INC = -0.0001 # / tile
 CONSUMPTION_BONUS_VARIANCE = 0.1
 
 RESOURCE_TO_BONUS_PROBABILITY = 0.1
+
+# Tutoriel
+TUTORIAL_MAX_LEVEL = 4
+
+TUTORIAL_TEXTS = [None,
+    [
+        "Click on a existing root (===>)", "then on the ground", "to create a new root.", "",
+        "Connect a root to resources", "to harvest them.", "", "", "", "", "", "",
+        "But beware! The more roots, the faster you lose resources!", "",
+        "You can delete an end root by right clicking it", "",
+        "Go deeper and deeper to get more resources.", "",
+        "The root must GROW!"
+    ],
+]
+
+TUTORIAL_TEXT_X = 5
+TUTORIAL_TEXT_Y_START = 20
