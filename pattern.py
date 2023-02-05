@@ -40,6 +40,9 @@ PATTERN20 = (['rrr', '  r', ' xr', '  r', 'rrr'], (co.TILES_X * 0.55, co.TILES_X
 
 LEVEL_4 = [PATTERN14, PATTERN15, PATTERN16, PATTERN17, PATTERN18, PATTERN19, PATTERN20] * 2 + [PATTERN3, PATTERN5, PATTERN7, PATTERN9]
 
+ALL_PATTERNS = [PATTERN1, PATTERN2, PATTERN3, PATTERN4, PATTERN5, PATTERN6, PATTERN7, PATTERN8, PATTERN9, PATTERN10, PATTERN11, PATTERN12, PATTERN13, PATTERN14, PATTERN15, PATTERN16, PATTERN17, PATTERN18, PATTERN19, PATTERN20, PATTERN21, PATTERN22, PATTERN23, PATTERN24]
+
+
 def get_pattern(pattern_list: list[tuple[str, tuple[float, float]]], x: int, y: int) -> list[str]:
     possible_patterns = [pattern for (pattern, (min_x, max_x)) in pattern_list if min_x <= x <= max_x]
 

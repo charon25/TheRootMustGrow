@@ -111,14 +111,16 @@ LEVELS_BASE_RESOURCE_PROBABILITY: list[float] = [None, # parce que les level son
     0.05,
     0.05,
     0.09,
-    0.15
+    0.15,
+    0.2
 ]
 
 LEVELS_RESOURCE_PROBABILITY_INCREASE: list[float] = [None, # parce que les level sont indexés à 1
     0.06,
     0.035,
     0.028,
-    0.10
+    0.10,
+    0.2
 ]
 
 LEVELS_ROCK_PROBABILITY: list[float] = [None, # parce que les level sont indexés à 1
@@ -151,3 +153,25 @@ LEVEL_4_RESOURCES_QUANTITY = (2200, 2700)
 LEVEL_4_DEPTH = 550
 LEVEL_4_PATTERN_COUNT = 35
 LEVEL_4_HEIGHT = LEVEL_4_DEPTH - LEVEL_3_DEPTH
+
+## END
+END_HEIGHT = LEVEL_4_DEPTH + 1
+END_RESOURCE_START = 3500
+END_RESOURCE_SCALING_ADD = 50 # / tile
+END_RESOURCE_SCALING_MULT = 1.001 # / tile
+END_RESOURCE_VARIANCE = 1.1
+def get_end_resource_quantities(depth: int) -> tuple[int, int]:
+    depth = depth - END_HEIGHT
+    base = (END_RESOURCE_START + END_RESOURCE_SCALING_ADD * depth) * (END_RESOURCE_SCALING_MULT ** depth)
+    return (int(base), int(base * END_RESOURCE_VARIANCE))
+
+END_ROCK_INV_PROBABILITY_START = 70
+END_ROCK_INV_PROBABILITY_MAX = 8
+_a = (END_ROCK_INV_PROBABILITY_START - END_ROCK_INV_PROBABILITY_MAX) * (END_HEIGHT ** 4)
+def get_end_rock_probability(depth: int):
+    return 1 / (END_ROCK_INV_PROBABILITY_MAX + _a / (depth ** 4))
+
+END_PATTERN_STARTING_GAP = 10
+END_PATTERN_END_GAP = 3
+
+END_PATTERN_END_GAP_DEPTH = 150

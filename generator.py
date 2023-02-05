@@ -7,6 +7,7 @@ import constants as co
 import pattern as pat
 import textures as tx
 from tile import Tile, TileType
+import utils
 
 
 def generate_random_depths(count: int, start_y: int, height: int) -> list[int]:
@@ -115,10 +116,13 @@ class TerrainGenerator:
 
             self.patterns_offset[index] += 1
 
+        rock_probability = co.LEVELS_ROCK_PROBABILITY[level] if level <= 4 else co.get_end_rock_probability(self.depth)
+        print(rock_probability)
+
         row = [
             (
                 Tile(TileType.ROCK, x, self.depth) 
-                if random() < co.LEVELS_ROCK_PROBABILITY[level]
+                if random() < rock_probability
                 else Tile(TileType.BASE, x, self.depth)
             ) if tile is None else tile
             for x, tile in enumerate(row)
@@ -175,7 +179,7 @@ class TerrainGenerator:
 
 
     def _setup_level_4(self):
-        self.terrain_resources = self._equitable_resource(2)
+        self.terrain_resources = self._equitable_resource(3)
         self.resources_quantities = self._resources_quantities(*co.LEVEL_4_RESOURCES_QUANTITY)
 
         self.in_pattern = []
@@ -185,6 +189,11 @@ class TerrainGenerator:
         self.patterns_offset = [0] * co.LEVEL_4_PATTERN_COUNT
 
         self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[4]
+
+
+    def _setup_end(self):
+        self.terrain_resources = self._equitable_resource(3)
+        self.patterns = []
 
 
     def __next__(self) -> list[Tile]:
@@ -226,7 +235,19 @@ class TerrainGenerator:
         if self.depth <= co.LEVEL_4_DEPTH:
             return self._generate_levels_layer(4)
 
-        return [Tile(TileType.BASE, x, self.depth) for x in range(co.TILES_X)]
+        if self.depth == co.LEVEL_4_DEPTH + 1:
+            self._setup_end()
+
+        self.resources_quantities = self._resources_quantities(*co.get_end_resource_quantities(self.depth))
+
+        if not self.in_pattern:
+            self.in_pattern = []
+            self.pattern_x = [randint(0, co.TILES_X) - 2]
+            self.pattern_depths = [randint(self.depth, self.depth + int(round(utils.clamped_lerp(self.depth - co.END_HEIGHT, 0, co.END_PATTERN_END_GAP_DEPTH, co.END_PATTERN_STARTING_GAP, co.END_PATTERN_END_GAP), 0)))]
+            self.patterns = [pat.get_pattern(pat.ALL_PATTERNS, self.pattern_x[0], self.pattern_depths[0])]
+            self.patterns_offset = [0]
+
+        return self._generate_levels_layer(5)
 
     def starting_terrain(self) -> list[list[Tile]]:
         self.depth = -1
@@ -251,3 +272,5 @@ class TerrainGenerator:
 
         if depth <= co.LEVEL_4_DEPTH:
             return 4
+
+        return '*'

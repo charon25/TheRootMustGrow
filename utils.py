@@ -47,4 +47,6 @@ def get_resource_string(quantity: float, divisor: int, letter: str) -> str:
 
     if q > 1000:
         return f'999{letter}'
-    return f'{q:.0f}{letter}{r:.0f}' if r > 0 else f'{q:.0f}{letter}'
+    if q > 10 or r == 0:
+        return f'{q:.0f}{letter}'
+    return f'{q:.0f}{letter}{r:.0f}'
