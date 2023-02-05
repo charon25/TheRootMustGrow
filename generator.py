@@ -73,6 +73,8 @@ class TerrainGenerator:
                 row.append(tile)
             else:
                 row.append(Tile(TileType.BASE, x, self.depth))
+        
+        row[15] = Tile(TileType(choice(list(co.BonusType)).value), 15, self.depth)
 
         return row
 

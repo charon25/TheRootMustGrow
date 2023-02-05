@@ -1,6 +1,7 @@
 
 import pygame
 import pyghelper
+import constants as co
 
 UI_BACKGROUND = pyghelper.Image.create('resources/textures/ui_background.png')
 
@@ -24,6 +25,10 @@ ROCK_TILES = [pyghelper.Image.create(f'resources/textures/tiles/rock_{i}.png') f
 
 TILE_SELECTOR = pyghelper.Image.create('resources/textures/tiles/tile_selector.png')
 
+BONUS_TILES = {
+    co.BonusType.PRODUCTION: pyghelper.Image.create('resources/textures/bonus/production.png'),
+    co.BonusType.CONSUMPTION: pyghelper.Image.create('resources/textures/bonus/consumption.png'),
+}
 
 # ROOTS
 ROOTS: dict[int, pygame.Surface] = {i: pyghelper.Image.create(f'resources/textures/roots/root_w{i}.png') for i in (1, 2, 3, 4)}

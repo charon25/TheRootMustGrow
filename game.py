@@ -61,6 +61,9 @@ class Game:
         self.consumption_rate: dict[co.ResourceType, float] = co.STARTING_CONSUMPTION_RATE.copy()
         self.total_gained: dict[co.ResourceType, float] = {resource: 0 for resource in co.ResourceType}
         self.total_consummed: dict[co.ResourceType, float] = {resource: 0 for resource in co.ResourceType}
+        # Bonus
+        self.production_bonus: float = 0
+        self.consumption_bonus: float = 0
 
         # Roots
         self.root_ghost: RootGhost = RootGhost()
@@ -106,6 +109,14 @@ class Game:
             mouse_y
         )
 
+    def apply_bonus(self, tile: Tile):
+        bonus_type = co.BonusType(tile.type.value)
+        if bonus_type == co.BonusType.PRODUCTION:
+            self.production_bonus += tile.bonus_value
+
+        if bonus_type == co.BonusType.CONSUMPTION:
+            self.consumption_rate += tile.bonus_value
+
     def create_root_from_ghost(self, root_ghost: RootGhost, mouse_x: int, mouse_y: int, auto: bool = False) -> bool:
         crossing_tiles = self.get_crossing_tile_root_ghost(root_ghost, mouse_x, mouse_y)
         new_root = Root(self.root_id, root_ghost, crossing_tiles, not_cuttable=auto)
@@ -116,18 +127,24 @@ class Game:
             self.terrain[y_cross][x_cross].root = new_root
 
         if not auto:
+            self.offset = self.screen_shake(utils.clamped_lerp(new_root.length, 0, co.SCREENSHAKE_LENGTH_MAX, 0, co.SCREENSHAKE_AMOUNT_MAX))
+
             mouse_tile_x, mouse_tile_y = mouse_x // co.TILE, mouse_y // co.TILE
             tile = self.terrain[mouse_tile_y][mouse_tile_x]
             if tile.is_resource_tile():
                 self.resources_tiles.append(tile)
                 new_root.resource_tile = tile
+            elif tile.is_bonus_tile():
+                self.apply_bonus(tile)
+                tile.type = TileType.BASE
+                self.offset = self.screen_shake(co.BONUS_SCREENSHAKE)
+                # TODO : particules
 
             if mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET > self.max_visible_tiles:
                 self.max_visible_tiles = mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET
 
             new_root.parent.increase_width()
 
-            self.offset = self.screen_shake(utils.clamped_lerp(new_root.length, 0, co.SCREENSHAKE_LENGTH_MAX, 0, co.SCREENSHAKE_AMOUNT_MAX))
 
         self.roots.append(new_root)
         return True
@@ -305,6 +322,7 @@ class Game:
         start_y = self.current_height // co.TILE
 
         resource_tiles: list[Tile] = []
+        bonus_tiles: list[Tile] = []
 
         for y in range(co.TILES_Y - co.UI_HEIGHT):
             row = self.terrain[y + start_y]
@@ -312,9 +330,13 @@ class Game:
                 game_surface.blit(tile.texture, (x * co.TILE, y * co.TILE))
                 if tile.type != TileType.BASE:
                     has_resources = tile.is_resource_tile() and tile.resource > 0
+                    is_bonus = tile.is_bonus_tile() and tile.bonus_value is not None
                     if has_resources:
                         resource_tiles.append(tile)
-                    if has_resources or tile.type == TileType.ROCK:
+                    elif is_bonus:
+                        bonus_tiles.append(tile)
+
+                    if has_resources or tile.type == TileType.ROCK or tile.is_bonus_tile():
                         game_surface.blit(tile.resource_textures, (x * co.TILE, y * co.TILE))
                 if (x, y) == self.selected_tile:
                     game_surface.blit(tx.TILE_SELECTOR, (x * co.TILE, y * co.TILE))
@@ -345,6 +367,15 @@ class Game:
                 resource_str = utils.get_resource_string(tile.resource, 1_000_000_000, 'B')
 
             self.blit_overlined_text(game_surface, resource_str, font, x, y, center_x = True)
+
+        # Bonus
+        font = utils.get_font(15)
+        for tile in bonus_tiles:
+            x = tile.x * co.TILE + co.TILE / 2 + 1
+            y = tile.y * co.TILE - 2 - self.current_height_floored
+
+            self.blit_overlined_text(game_surface, f'{abs(100 * tile.bonus_value):.0f} %', font, x, y, center_x = True)
+
 
         # RootGhost
         if self.root_ghost.texture_ready:
@@ -378,7 +409,7 @@ class Game:
             if tile.resource >= 0:
                 resource = co.ResourceType(tile.type.value)
                 self.particles.extend(Particle.generate_extract_particle(tile.x * co.TILE + co.TILE / 2, tile.y * co.TILE + co.TILE / 2, resource))
-                consumed = tile.consume(self.absorption_rate[resource])
+                consumed = tile.consume(self.absorption_rate[resource] * (1 + self.production_bonus))
                 self.resources[resource] += consumed
                 self.total_gained[resource] += consumed
 
@@ -387,10 +418,12 @@ class Game:
 
         self.total_roots = sum(root.length for root in self.roots)
         for resource in co.ResourceType:
-            self.resources[resource] -= self.total_roots * self.consumption_rate[resource]
-            self.total_consummed[resource] = self.total_roots * self.consumption_rate[resource]
+            consumed = self.total_roots * self.consumption_rate[resource] * (1 + self.consumption_bonus)
+            self.resources[resource] -= consumed
+            self.total_consummed[resource] = consumed
 
-            if self.total_gained[resource] > 0 and random.random() < utils.clamped_lerp(self.total_gained[resource], 0, co.GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY_AMOUNT, co.GAINED_RESOURCE_PARTICLE_MIN_PROBABILITY, co.GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY):
+            show_particle = random.random() < utils.clamped_lerp(self.total_gained[resource], 0, co.GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY_AMOUNT, co.GAINED_RESOURCE_PARTICLE_MIN_PROBABILITY, co.GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY)
+            if self.total_gained[resource] > 0 and show_particle:
                 self.particles.extend(Particle.generate_extract_particle(*co.UI_RESOURCE_TEXTURE_COORDS[resource], resource, fixed=True))
 
         if all(quantity > 0 for _, quantity in self.resources.items()):
