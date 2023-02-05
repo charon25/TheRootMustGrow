@@ -43,6 +43,7 @@ class Tile:
         self.y = y
         self.texture: Surface = choice(tx.BASE_TILES)
         self.resource_textures: Surface = get_random_texture(self.type)
+        self.absorption_modifier: float = 1.0
 
     def get_texture(self) -> Surface:
         if self.is_resource_tile():
@@ -62,12 +63,13 @@ class Tile:
     def __repr__(self) -> str:
         return f'{self.type.name} : {self.x} / {self.y}'
 
-    def set_starting_resource(self, starting_resource: int):
+    def set_starting_resource(self, starting_resource: int, absorption_modifier: float):
         self.resource = starting_resource
         self.starting_resource = starting_resource
+        self.absorption_modifier = absorption_modifier
 
     def consume(self, rate: float):
-        quantity = rate * self.starting_resource
+        quantity = rate * self.absorption_modifier * self.starting_resource
         if quantity < self.resource:
             self.resource -= quantity
             return quantity

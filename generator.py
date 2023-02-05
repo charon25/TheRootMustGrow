@@ -45,11 +45,11 @@ class TerrainGenerator:
                 tile = Tile(TileType.ROCK, x + dx, y)
             elif c == 'x':
                 tile = Tile(next(self.terrain_resources), x + dx, y)
-                tile.set_starting_resource(next(self.resources_quantities))
+                tile.set_starting_resource(next(self.resources_quantities), utils.random_float(co.RESOURCE_ABSORPTION_MODIFIER_MIN, utils.clamped_lerp(self.depth, 1, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX_DEPTH, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MIN, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX)))
                 self.last_resource_type = tile.type
             elif c == 's':
                 tile = Tile(self.last_resource_type, x + dx, y)
-                tile.set_starting_resource(next(self.resources_quantities))
+                tile.set_starting_resource(next(self.resources_quantities, utils.random_float(co.RESOURCE_ABSORPTION_MODIFIER_MIN, utils.clamped_lerp(self.depth, 1, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX_DEPTH, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MIN, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX))))
             else:
                 tile = Tile(TileType.BASE, x + dx, y)
 
@@ -69,7 +69,7 @@ class TerrainGenerator:
         for x in range(co.TILES_X):
             if x == resource_x:
                 tile = Tile(resource_type, x, self.depth)
-                tile.set_starting_resource(randint(*co.FIRST_RESOURCE_LAYER_QUANTITY))
+                tile.set_starting_resource(randint(*co.FIRST_RESOURCE_LAYER_QUANTITY), utils.random_float(co.RESOURCE_ABSORPTION_MODIFIER_MIN, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MIN))
                 row.append(tile)
             else:
                 row.append(Tile(TileType.BASE, x, self.depth))
@@ -91,7 +91,7 @@ class TerrainGenerator:
             if x == special_x:
                 tile = Tile(resource_type, x, self.depth)
                 if tile.is_resource_tile():
-                    tile.set_starting_resource(randint(*co.FIRST_RESOURCE_LAYER_QUANTITY))
+                    tile.set_starting_resource(randint(*co.FIRST_RESOURCE_LAYER_QUANTITY), utils.random_float(co.RESOURCE_ABSORPTION_MODIFIER_MIN, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MIN))
                 row.append(tile)
             else:
                 row.append(Tile(TileType.BASE, x, self.depth))
@@ -131,7 +131,7 @@ class TerrainGenerator:
             resource_x = randrange(0, co.TILES_X)
             resource_type = next(self.terrain_resources)
             row[resource_x] = Tile(resource_type, resource_x, self.depth)
-            row[resource_x].set_starting_resource(next(self.resources_quantities))
+            row[resource_x].set_starting_resource(next(self.resources_quantities), utils.random_float(co.RESOURCE_ABSORPTION_MODIFIER_MIN, utils.clamped_lerp(self.depth, 1, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX_DEPTH, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MIN, co.RESOURCE_ABSORPTION_MODIFIER_MAX_MAX)))
             self.current_resource_probability = co.LEVELS_BASE_RESOURCE_PROBABILITY[level]
         else:
             self.current_resource_probability += co.LEVELS_RESOURCE_PROBABILITY_INCREASE[level]

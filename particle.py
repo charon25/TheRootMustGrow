@@ -17,7 +17,7 @@ def get_texture(type: co.ResourceType):
 
 
 class Particle:
-    def __init__(self, x: int, y: int, vx: float, vy: float, type: co.ResourceType) -> None:
+    def __init__(self, x: int, y: int, vx: float, vy: float, type: co.ResourceType, fixed: bool = False) -> None:
         self.vx = vx
         self.vy = vy
         self.type = type
@@ -27,6 +27,7 @@ class Particle:
         self.y = y - self.half_height
         self.life = co.PARTICLE_DURATION
         self.done = False
+        self.is_fixed: bool = fixed
 
     def age(self):
         self.x += self.vx
@@ -40,7 +41,7 @@ class Particle:
         return 0 <= self.y - current_height <= co.HEIGHT
 
     @classmethod
-    def generate_extract_particles(cls, x: float, y: float, type: co.ResourceType):
+    def generate_extract_particle(cls, x: float, y: float, type: co.ResourceType, fixed: bool = False):
         if random() < co.EXTRACT_PARTICLE_PROBABILITY:
             return [
                 Particle(
@@ -49,7 +50,8 @@ class Particle:
                         x, y,
                         utils.random_sym_float(co.EXTRACT_PARTICLE_SPEED), utils.random_sym_float(co.EXTRACT_PARTICLE_SPEED)
                     ),
-                    type
+                    type,
+                    fixed
                 )
         ]
         else:

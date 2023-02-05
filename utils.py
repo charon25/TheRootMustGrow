@@ -50,3 +50,6 @@ def get_resource_string(quantity: float, divisor: int, letter: str) -> str:
     if q > 10 or r == 0:
         return f'{q:.0f}{letter}'
     return f'{q:.0f}{letter}{r:.0f}'
+
+def random_float(min: float, max: float):
+    return random() * (max - min) + min

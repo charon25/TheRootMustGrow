@@ -116,9 +116,11 @@ class Game:
 
         if not auto:
             mouse_tile_x, mouse_tile_y = mouse_x // co.TILE, mouse_y // co.TILE
-            if self.terrain[mouse_tile_y][mouse_tile_x].is_resource_tile():
-                self.resources_tiles.append(self.terrain[mouse_tile_y][mouse_tile_x])
-                new_root.resource_tile = self.terrain[mouse_tile_y][mouse_tile_x]
+            tile = self.terrain[mouse_tile_y][mouse_tile_x]
+            if tile.is_resource_tile():
+                self.resources_tiles.append(tile)
+                new_root.resource_tile = tile
+                print(new_root.resource_tile.absorption_modifier)
 
             if mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET > self.max_visible_tiles:
                 self.max_visible_tiles = mouse_tile_y + co.MAX_VISIBLE_TILES_OFFSET
@@ -324,7 +326,7 @@ class Game:
 
         # Particules
 
-        game_surface.blits([(particle.texture, (particle.x, particle.y - self.current_height_floored)) for particle in self.particles if particle.is_visible(self.current_height_floored)])
+        game_surface.blits([(particle.texture, (particle.x, particle.y - self.current_height_floored)) for particle in self.particles if particle.is_visible(self.current_height_floored) and not particle.is_fixed])
 
         # Resources
         font = utils.get_font(15)
@@ -363,6 +365,8 @@ class Game:
 
         self.blit_overlined_text(game_surface, f'Depth : {self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT:.0f} / {self.max_visible_tiles - co.UI_HEIGHT} [{self.terrain_generator.get_level(self.current_height_floored // co.TILE + co.TILES_Y - co.UI_HEIGHT)}]', utils.get_font(30), *co.DEPTH_COORDS)
 
+        game_surface.blits([(particle.texture, (particle.x, particle.y)) for particle in self.particles if particle.is_fixed])
+
         self.screen.blit(game_surface, next(self.offset))
 
 
@@ -371,7 +375,7 @@ class Game:
         for tile in self.resources_tiles:
             if tile.resource >= 0:
                 resource = co.ResourceType(tile.type.value)
-                self.particles.extend(Particle.generate_extract_particles(tile.x * co.TILE + co.TILE / 2, tile.y * co.TILE + co.TILE / 2, resource))
+                self.particles.extend(Particle.generate_extract_particle(tile.x * co.TILE + co.TILE / 2, tile.y * co.TILE + co.TILE / 2, resource))
                 consumed = tile.consume(self.absorption_rate[resource])
                 self.resources[resource] += consumed
                 self.total_gained[resource] += consumed
@@ -383,6 +387,9 @@ class Game:
         for resource in co.ResourceType:
             self.resources[resource] -= self.total_roots * self.consumption_rate[resource]
             self.total_consummed[resource] = self.total_roots * self.consumption_rate[resource]
+
+            if self.total_gained[resource] > 0 and random.random() < utils.clamped_lerp(self.total_gained[resource], 0, co.GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY_AMOUNT, co.GAINED_RESOURCE_PARTICLE_MIN_PROBABILITY, co.GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY):
+                self.particles.extend(Particle.generate_extract_particle(*co.UI_RESOURCE_TEXTURE_COORDS[resource], resource, fixed=True))
 
         if all(quantity > 0 for _, quantity in self.resources.items()):
             self.decay_cooldown = -1

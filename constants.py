@@ -57,9 +57,9 @@ RESOURCE_SPACES: dict[ResourceType, str] = {
 
 # relative / frame
 STARTING_ABSORPTION_RATE: dict[ResourceType, float] = {
-    ResourceType.WATER: 1 / 50,
-    ResourceType.NITROGEN: 0.2 / 50,
-    ResourceType.PHOSPHORUS: 0.2 / 50
+    ResourceType.WATER: (1 / 20) / 60,
+    ResourceType.NITROGEN: (1 / 38) / 60,
+    ResourceType.PHOSPHORUS: (1 / 45) / 60
 }
 # / frame / racine
 STARTING_CONSUMPTION_RATE: dict[ResourceType, float] = {
@@ -88,6 +88,12 @@ RESOURCE_TEXT_COORDS: dict[ResourceType, tuple[int, int]] = {
     ResourceType.PHOSPHORUS: (35, 95)
 }
 
+UI_RESOURCE_TEXTURE_COORDS: dict[ResourceType, tuple[int, int]] = {
+    ResourceType.WATER: (5 + 133, UI_TOP + 25 + 13),
+    ResourceType.NITROGEN: (5 + 133, UI_TOP + 60 + 13),
+    ResourceType.PHOSPHORUS: (5 + 133, UI_TOP + 95 + 13)
+}
+
 TOTAL_ROOTS_TEXT_COORD = (5, -4)
 
 FPS_COORDS = (740, 100)
@@ -104,9 +110,19 @@ EXTRACT_PARTICLE_PROBABILITY = 0.75
 EXTRACT_PARTICLE_RADIUS = TILE / 3
 EXTRACT_PARTICLE_SPEED = 0.5
 
+GAINED_RESOURCE_PARTICLE_MIN_PROBABILITY = 1 / 15
+GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY = 1
+GAINED_RESOURCE_PARTICLE_MAX_PROBABILITY_AMOUNT = 100 / 60
+
 # Génération terrain
 FIRST_RESOURCE_LAYER_QUANTITY = (50, 150)
 
+RESOURCE_ABSORPTION_MODIFIER_MIN = 0.9
+RESOURCE_ABSORPTION_MODIFIER_MAX_MIN = 1.1
+RESOURCE_ABSORPTION_MODIFIER_MAX_MAX = 2
+RESOURCE_ABSORPTION_MODIFIER_MAX_MAX_DEPTH = 500
+
+## LEVELS
 LEVELS_BASE_RESOURCE_PROBABILITY: list[float] = [None, # parce que les level sont indexés à 1
     0.05,
     0.05,
