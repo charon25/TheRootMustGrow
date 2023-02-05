@@ -33,7 +33,7 @@ class TerrainGenerator:
 
     def _equitable_resource(self, cycle: int = 1):
         while True:
-            resources = list(co.ResourceType) * cycle
+            resources = [co.ResourceType.WATER, co.ResourceType.WATER, co.ResourceType.NITROGEN, co.ResourceType.PHOSPHORUS] * cycle
             shuffle(resources)
             yield from [TileType(resource.value) for resource in resources]
 

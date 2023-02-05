@@ -422,8 +422,8 @@ class Game:
 
                     if has_resources or tile.type == TileType.ROCK or tile.is_bonus_tile():
                         game_surface.blit(tile.resource_textures, (x * co.TILE, y * co.TILE))
-                if (x, y) == self.selected_tile:
-                    game_surface.blit(tx.TILE_SELECTOR, (x * co.TILE, y * co.TILE - self.current_height_floored))
+                if (x, y + start_y) == self.selected_tile:
+                    game_surface.blit(tx.TILE_SELECTOR, (x * co.TILE, y * co.TILE))# - self.current_height_floored))
 
         if self.state == co.GameState.TUTORIAL:
             resource_tiles: list[Tile] = []
@@ -531,7 +531,7 @@ class Game:
 
         game_surface.blits([(particle.texture, (particle.x, particle.y)) for particle in self.particles if particle.is_fixed])
 
-        if self.state == co.GameState.GAME or (self.state == co.GameState.GAME and self.terrain_generator.show_bonuses()):
+        if self.state == co.GameState.GAME or (self.state == co.GameState.TUTORIAL and self.terrain_generator.show_bonuses()):
             font = utils.get_font(30)
             bonus_text_surface = font.render(f'Bonuses :', False, (0, 0, 0))
             game_surface.blit(bonus_text_surface, (co.BONUS_TEXT_COORD[0], co.BONUS_TEXT_COORD[1] + co.UI_TOP))
@@ -591,6 +591,9 @@ class Game:
 
 
     def update_roots(self):
+        if self.state != co.GameState.GAME:
+            return
+
         if int(self.decay_cooldown) % 100 == 45:
             self.sounds.play_sound(co.SOUND_WARNING)
 
@@ -607,6 +610,7 @@ class Game:
         mouse_x, mouse_y = pyg.mouse.get_pos()
 
         if mouse_y > co.UI_TOP:
+            self.selected_tile = (-1, -1)
             return
 
         mouse_tile_x, mouse_tile_y = mouse_x // co.TILE, (mouse_y + self.current_height) // co.TILE

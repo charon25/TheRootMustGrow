@@ -71,7 +71,7 @@ class Tutorial:
         self.level += 1
 
     def show_bonuses(self):
-        return self.level >= 2
+        return True
 
     def get_level(self, *args):
         return f'{self.level} / {co.TUTORIAL_MAX_LEVEL}'

@@ -254,8 +254,9 @@ TUTORIAL_TEXTS = [None,
         "Connect a root to resources", "to harvest them.", "", "", "", "", "", "",
         "But beware! The more roots, the faster you lose resources!", "",
         "You can delete an end root by right clicking it", "",
-        "Get all the resources from the screen to go to the next screen.", ""
+        "Get all the resources from the screen to go to the next screen.", "",
         # "Go deeper and deeper to get more resources.", "",
+        "Roots cannot be horizontal of going upwards, only downwards.",
         "The root must GROW!"
     ],
     [
