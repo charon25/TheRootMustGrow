@@ -77,3 +77,9 @@ def int_to_small_string(value: int, after_comma: int = 1, apply_ceil: bool = Fal
 
 def random_float(min: float, max: float):
     return random() * (max - min) + min
+
+def void(*args):
+    pass
+
+def point_in_rectangle(x: int, y: int, left: int, top: int, width: int, height: int):
+    return left <= x <= left + width and top <= y <= top + height

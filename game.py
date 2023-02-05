@@ -32,13 +32,15 @@ class Game:
 
         self.clock = pyg.time.Clock()
 
+        self.state: co.GameState = co.GameState.MENU
+
         # Events
         self.events = pyghelper.EventManager(True)
         self.events.set_quit_callback(self.stop)
-        self.events.set_mousebuttondown_callback(self.mousedown_game)
-        self.events.set_mousebuttonup_callback(self.mouseup_game)
-        self.events.set_mousemotion_callback(self.mousemove_game)
-        self.events.set_mousewheel_callback(self.mousewheel_game)
+        self.set_callbacks()
+
+        self.tutorial_done: bool = False
+        self.in_toturial: bool = False
 
         def does_drag(data):self.is_dragging = self.is_clicking
         self.events.add_custom_event('drag_timer', does_drag)
@@ -46,10 +48,16 @@ class Game:
         self.has_ended = False
 
 
-    def start_game(self) -> None:
+    def start_game(self, tutorial: bool) -> None:
         # Terrain
-        self.terrain_generator = TerrainGenerator()
-        self.terrain: list[list[Tile]] = self.terrain_generator.starting_terrain()
+        self.in_toturial = tutorial
+        if not tutorial:
+            self.terrain_generator = TerrainGenerator()
+            self.terrain: list[list[Tile]] = self.terrain_generator.starting_terrain()
+            self.max_visible_tiles = co.TILES_Y + co.STARTING_SCROLL_OFFSET
+        else:
+            print('tuto')
+
         self.selected_tile: tuple[int, int] = (-1, -1)
         ## Drag
         self.current_height: int = 0
@@ -58,7 +66,6 @@ class Game:
         self.is_dragging: bool = False
         self.drag_start_y: int = 0
         self.max_height: int = 0
-        self.max_visible_tiles = co.TILES_Y + 10000#co.STARTING_SCROLL_OFFSET
 
         # Ressources
         self.resources: dict[co.ResourceType, int] = {resource: 1200 for resource in list(co.ResourceType)} # TODO bonnes valeurs
@@ -84,7 +91,34 @@ class Game:
         self.ticks = 0
         self.memory_usage = process.memory_info().rss
 
+        self.set_callbacks()
         self.create_initial_roots()
+
+    def set_callbacks(self):
+        if self.state == co.GameState.MENU:
+            self.events.set_mousebuttondown_callback(utils.void)
+            self.events.set_mousebuttonup_callback(self.mouseup_menu)
+            self.events.set_mousemotion_callback(utils.void)
+            self.events.set_mousewheel_callback(utils.void)
+        elif self.state in (co.GameState.GAME, co.GameState.TUTORIAL):
+            self.events.set_mousebuttondown_callback(self.mousedown_game)
+            self.events.set_mousebuttonup_callback(self.mouseup_game)
+            self.events.set_mousemotion_callback(self.mousemove_game)
+            self.events.set_mousewheel_callback(self.mousewheel_game)
+
+
+    def mouseup_menu(self, data: dict[str, int]):
+        if not data['button'] in (co.LEFT_CLICK, co.RIGHT_CLICK):
+            return
+
+        if utils.point_in_rectangle(*data['pos'], co.QUIT_BTN_X, co.QUIT_BTN_Y, co.BTN_WIDTH, co.BTN_HEIGHT):
+            self.stop()
+        elif utils.point_in_rectangle(*data['pos'], co.PLAY_BTN_X, co.PLAY_BTN_Y, co.BTN_WIDTH, co.BTN_HEIGHT):
+            if self.tutorial_done:
+                self.state = co.GameState.GAME
+            else:
+                self.state = co.GameState.TUTORIAL
+            self.start_game(tutorial=not self.tutorial_done)
 
 
     def create_initial_roots(self):
@@ -517,12 +551,20 @@ class Game:
 
         self.ticks += 1
 
+
+    def loop_tutorial(self):
+        pass
+
+
     def loop(self) -> None:
         dt = self.clock.tick(60)
         self.fps = 1000 / dt
         self.events.listen()
 
-        self.loop_game()
+        if self.state == co.GameState.MENU:
+            self.screen.blit(tx.MENU, (0, 0))
+        elif self.state in (co.GameState.TUTORIAL, co.GameState.GAME):
+            self.loop_game()
 
         pyg.display.update()
 

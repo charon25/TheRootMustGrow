@@ -12,6 +12,18 @@ HEIGHT = TILES_Y * TILE
 STARTING_SCROLL_OFFSET = 5
 MAX_VISIBLE_TILES_OFFSET = 18
 
+# Game State
+class GameState(Enum):
+    MENU = 0
+    TUTORIAL = 1
+    GAME = 2
+
+# Menu
+
+PLAY_BTN_X, PLAY_BTN_Y = (150, 434)
+QUIT_BTN_X, QUIT_BTN_Y = (150, 596)
+BTN_WIDTH, BTN_HEIGHT = (500, 90)
+
 
 # Roots
 ROOT_HEIGHTS: dict[int, int] = {

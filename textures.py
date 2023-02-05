@@ -51,3 +51,6 @@ PHOSPHORUS_PARTICLES = [pyghelper.Image.create(f'resources/textures/particles/ph
 
 BONUS_PARTICLES_COUNT = 3
 BONUS_PARTICLES = [pyghelper.Image.create(f'resources/textures/particles/bonus_{i}.png') for i in range(1, BONUS_PARTICLES_COUNT + 1)]
+
+
+MENU = pyghelper.Image.create('resources/textures/menu.png')
