@@ -334,8 +334,10 @@ class Game:
         if tile.has_root and tile.root.contains_point(mouse_x, mouse_y):
             return False
 
-        for tile_x, tile_y in self.get_crossing_tile_root_ghost(self.root_ghost, mouse_x, mouse_y):
-            tile = self.terrain[tile_y][tile_x]
+        for cross_x, cross_y in self.get_crossing_tile_root_ghost(self.root_ghost, mouse_x, mouse_y):
+            if (cross_x, cross_y) == (self.root_ghost.start_x // co.TILE, self.root_ghost.start_y // co.TILE):
+                continue
+            tile = self.terrain[cross_y][cross_x]
             if tile.has_root and not self.root_ghost.starting_root.is_child(tile.root):
                 return False
 
@@ -584,10 +586,6 @@ class Game:
                 self.decay_cooldown = utils.clamped_lerp(smallest_resource, co.MIN_DECAY_COOLDOWN_RESOURCE, 0, co.MIN_DECAY_COOLDOWN, co.STARTING_DECAY_COOLDOWN)
         else:
             self.decay_cooldown = -1
-
-        # if all(quantity > 0 or self.total_gained[] for resource, quantity in self.resources.items()):
-        #     self.decay_cooldown = -1
-        # else:
 
         self.resources_tiles = [tile for tile in self.resources_tiles if tile.resource > 0]
 
